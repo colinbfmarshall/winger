@@ -18,7 +18,7 @@ const DuelInfo = ({ duels }) => {
 const styles = StyleSheet.create({
   infoContainer: {
     flex: 2,
-    backgroundColor: 'black',
+
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -35,7 +35,11 @@ const styles = StyleSheet.create({
     color: 'white',
   },
   vs: {
+    fontSize: 16,
     color: 'tomato',
+    fontWeight: 'bold',
+    height: 20, // Explicit height
+    lineHeight: 20, // Ensure text is vertically centered
   },
 });
 

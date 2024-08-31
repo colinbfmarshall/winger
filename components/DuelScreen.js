@@ -7,6 +7,8 @@ import * as Haptics from 'expo-haptics';
 import Constants from 'expo-constants';
 import axios from 'axios';
 import DuelInfo from './DuelInfo';
+import DuelLoadingScreen from './DuelLoadingScreen';
+
 
 const STATUSBAR_HEIGHT = Constants.statusBarHeight;
 
@@ -23,6 +25,8 @@ const DuelScreen = ({ route }) => {
   const [isFirstVideoPlaying, setIsFirstVideoPlaying] = useState(true);
   const [isSecondVideoPlaying, setIsSecondVideoPlaying] = useState(false);
   const [winnerId, setWinnerId] = useState(null);
+  const [isLoading, setIsLoading] = useState(true); // Add loading state
+
 
   const swipeableRef1 = useRef(null);
   const swipeableRef2 = useRef(null);
@@ -41,6 +45,15 @@ const DuelScreen = ({ route }) => {
     }
   }, [topicValue, winnerId]);
 
+  useEffect(() => {
+    // Show loading screen for 3 seconds
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 3000);
+
+    return () => clearTimeout(timer); // Cleanup the timer
+  }, []);
+
   const startDuelSession = (topicValue) => {
     axios.post(`${API_URL}/api/v1/duel_sessions/start`, {
       topic_type: "action",
@@ -57,17 +70,15 @@ const DuelScreen = ({ route }) => {
   };
 
   const vibrate = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Hard);
   };
 
   const onSwipeRightToLeft = () => {
-    console.log('Swiped left!');
     vibrate();
     submitWinner(duels[1].id);
   };
 
   const onSwipeLeftToRight = () => {
-    console.log('Swiped Right!');
     vibrate();
     submitWinner(duels[0].id);
   };
@@ -113,9 +124,13 @@ const DuelScreen = ({ route }) => {
     return <View style={styles.SwipeAction} />;
   };
 
+  if (isLoading) {
+    return <DuelLoadingScreen />; // Use DuelLoadingScreen component
+  }
+
   return (
     <GestureHandlerRootView style={styles.fullScreen}>
-      <View style={[styles.container, styles.screenBackground]}>
+      <View style={styles.container}>
         {duels.length > 0 && (
           <>
             <Swipeable
@@ -194,9 +209,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     flexDirection: 'column',
-  },
-  screenBackground: {
-    backgroundColor: 'black',
+    backgroundColor: 'black'
   },
   SwipeAction: {
     flex: 1,
