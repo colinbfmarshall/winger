@@ -1,10 +1,11 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Dimensions, Button } from 'react-native';
+import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { Video } from 'expo-av';
 import { GestureHandlerRootView, Swipeable } from 'react-native-gesture-handler';
 import * as Haptics from 'expo-haptics';
 import Constants from 'expo-constants';
 import axios from 'axios';
+import DuelInfo from './DuelInfo';
 
 const STATUSBAR_HEIGHT = Constants.statusBarHeight;
 
@@ -74,6 +75,8 @@ const DuelScreen = ({ route }) => {
         onComplete();
       } else if (response.data.duels) {
         setDuels(response.data.duels);
+        setIsFirstVideoPlaying(true);
+        setIsSecondVideoPlaying(false);  
       } else {
         // Reset the videos if no new duels are returned
         setDuels([]);
@@ -124,7 +127,6 @@ const DuelScreen = ({ route }) => {
                   ref={videoRef1}
                   source={{ uri: duels[0].videoUrl }}
                   rate={1.0}
-                  volume={1.0}
                   isMuted={true}
                   shouldPlay={isFirstVideoPlaying}
                   isLooping={false}
@@ -134,19 +136,11 @@ const DuelScreen = ({ route }) => {
                       setIsSecondVideoPlaying(true);
                     }
                   }}
-                  onPress={() => {
-                    console.log('Replaying video 1');
-                    videoRef1.current.replayAsync();
-                  }}
                   style={styles.topVideo}
                 />
               </View>
             </Swipeable>
-            <View style={styles.infoContainer}>
-              <Text style={styles.player}>{duels[0].player} vs {duels[1].player}</Text>
-              <Text style={styles.details}>{duels[0].team} v {duels[0].opposition}</Text>
-              <Text style={styles.details}>{duels[0].competition}</Text>
-            </View>
+            <DuelInfo duels={duels} />
             <Swipeable
               key={duels[1].id}
               ref={swipeableRef2}
@@ -165,13 +159,9 @@ const DuelScreen = ({ route }) => {
                   ref={videoRef2}
                   source={{ uri: duels[1].videoUrl }}
                   rate={1.0}
-                  volume={1.0}
                   isMuted={true}
                   shouldPlay={isSecondVideoPlaying}
                   isLooping={false}
-                  onPress={() => {
-                    videoRef2.current.replayAsync();
-                  }}
                   style={styles.bottomVideo}
                 />
               </View>
@@ -193,58 +183,41 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     flexDirection: 'column',
-    marginTop: Dimensions.get('window').height * 0.2,
-    marginBottom: Dimensions.get('window').height * 0.2,
   },
   screenBackground: {
     backgroundColor: 'black',
   },
   title: {
     fontSize: 24,
+    color: 'white',
+    marginBottom: 10,
   },
   rightSwipeAction: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: 'black',
   },
   leftSwipeAction: {
     flex: 1,
     backgroundColor: 'black',
   },
   videoContainer: {
-    flex: 4, // 40% of the safe area
+    flex: 4,
     width: Dimensions.get('window').width,
-    height: Dimensions.get('window').height * 0.3,
     alignItems: 'center',
     justifyContent: 'center',
   },
   topVideo: {
+    marginTop: Dimensions.get('window').height * 0.4,
     width: '100%',
     height: '100%',
     resizeMode: 'stretch',
-    borderBottomColor: 'tomato',
-    borderBottomWidth: 1,
   },
   bottomVideo: {
+    marginBottom: Dimensions.get('window').height * 0.4,
     width: '100%',
     height: '100%',
     resizeMode: 'stretch',
-    borderTopColor: 'tomato',
-    borderTopWidth: 1,
-  },
-  infoContainer: {
-    flex: 2, // 20% of the safe area
-    width: Dimensions.get('window').width,
-    color: 'white',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  player: {
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  details: {
-    fontSize: 10,
-  },
+  }
 });
 
 export default DuelScreen;
