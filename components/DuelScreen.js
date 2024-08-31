@@ -1,7 +1,8 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { Video, ResizeMode } from 'expo-av';
-import { GestureHandlerRootView, Swipeable } from 'react-native-gesture-handler';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import Swipeable from 'react-native-gesture-handler/Swipeable';
 import * as Haptics from 'expo-haptics';
 import Constants from 'expo-constants';
 import axios from 'axios';
@@ -21,6 +22,7 @@ const DuelScreen = ({ route }) => {
   const [view, setView] = useState('initial');
   const [isFirstVideoPlaying, setIsFirstVideoPlaying] = useState(true);
   const [isSecondVideoPlaying, setIsSecondVideoPlaying] = useState(false);
+  const [winnerId, setWinnerId] = useState(null);
 
   const swipeableRef1 = useRef(null);
   const swipeableRef2 = useRef(null);
@@ -29,16 +31,22 @@ const DuelScreen = ({ route }) => {
 
   useEffect(() => {
     startDuelSession(topicValue);
-  }, [topicValue]);
+    if (winnerId) {
+      const updatedDuels = duels.filter(duel => duel.id !== winnerId);
+      const winnerDuel = duels.find(duel => duel.id === winnerId);
+      if (winnerDuel) {
+        updatedDuels.splice(2, 0, winnerDuel);
+      }
+      setDuels(updatedDuels);
+    }
+  }, [topicValue, winnerId]);
 
   const startDuelSession = (topicValue) => {
-    console.log('Starting duel session with topic value:', topicValue);
     axios.post(`${API_URL}/api/v1/duel_sessions/start`, {
       topic_type: "action",
       topic_value: 'try',
     })
     .then(response => {
-      console.log('Duel session started:', response.data);
       setDuels(response.data.duels);
       setDuelSessionId(response.data.duel_session_id);
       setView('newDuel');
@@ -52,17 +60,20 @@ const DuelScreen = ({ route }) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft);
   };
 
-  const onSwipeLeft = () => {
+  const onSwipeRightToLeft = () => {
+    console.log('Swiped left!');
     vibrate();
     submitWinner(duels[1].id);
   };
 
-  const onSwipeRight = () => {
+  const onSwipeLeftToRight = () => {
+    console.log('Swiped Right!');
     vibrate();
     submitWinner(duels[0].id);
   };
 
   const submitWinner = (winnerId) => {
+    setWinnerId(winnerId);
     axios.post(`${API_URL}/api/v1/duels/submit`, {
       winner_id: winnerId,
       moment1_id: duels[0].id,
@@ -70,7 +81,6 @@ const DuelScreen = ({ route }) => {
       duel_session_id: duelSessionId,
     })
     .then(response => {
-      console.log('Duel result submitted:', response.data);
       if (response.data.status === 'completed') {
         onComplete();
       } else if (response.data.duels) {
@@ -96,17 +106,16 @@ const DuelScreen = ({ route }) => {
   };
 
   const renderRightActions = () => {
-    return <View style={styles.rightSwipeAction} />;
+    return <View style={styles.SwipeAction} />;
   };
 
   const renderLeftActions = () => {
-    return <View style={styles.leftSwipeAction} />;
+    return <View style={styles.SwipeAction} />;
   };
 
   return (
     <GestureHandlerRootView style={styles.fullScreen}>
       <View style={[styles.container, styles.screenBackground]}>
-        <Text style={styles.title}>{`${sport.charAt(0).toUpperCase() + sport.slice(1)} Duel`}</Text>
         {duels.length > 0 && (
           <>
             <Swipeable
@@ -116,9 +125,13 @@ const DuelScreen = ({ route }) => {
               leftThreshold={10}
               rightThreshold={10}
               renderLeftActions={renderLeftActions}
+              renderRightActions={renderRightActions}
               onSwipeableOpen={(direction) => {
+                if (direction === 'right') {
+                  onSwipeRightToLeft();
+                }
                 if (direction === 'left') {
-                  onSwipeLeft();
+                  onSwipeLeftToRight();
                 }
               }}
             >
@@ -131,7 +144,7 @@ const DuelScreen = ({ route }) => {
                   shouldPlay={isFirstVideoPlaying}
                   isLooping={false}
                   useNativeControls
-                  resizeMode={ResizeMode.CONTAIN}
+                  resizeMode={ResizeMode.STRETCH}
                   onPlaybackStatusUpdate={(status) => {
                     if (status.didJustFinish) {
                       videoRef1.current.replayAsync();
@@ -143,21 +156,7 @@ const DuelScreen = ({ route }) => {
                   style={styles.topVideo}
                 />
               </View>
-            </Swipeable>
-            <DuelInfo duels={duels} />
-            <Swipeable
-              key={duels[1].id}
-              ref={swipeableRef2}
-              friction={1}
-              leftThreshold={10}
-              rightThreshold={10}
-              renderRightActions={renderRightActions}
-              onSwipeableOpen={(direction) => {
-                if (direction === 'right') {
-                  onSwipeRight();
-                }
-              }}
-            >
+              <DuelInfo duels={duels} />
               <View style={styles.videoContainer}>
                 <Video
                   ref={videoRef2}
@@ -167,8 +166,7 @@ const DuelScreen = ({ route }) => {
                   shouldPlay={isSecondVideoPlaying}
                   isLooping={false}
                   useNativeControls
-                  resizeMode={ResizeMode.CONTAIN}
-                  style={styles.bottomVideo}
+                  resizeMode={ResizeMode.STRETCH}
                   onPlaybackStatusUpdate={(status) => {
                     if (status.didJustFinish) {
                       videoRef2.current.replayAsync();
@@ -176,6 +174,7 @@ const DuelScreen = ({ route }) => {
                       setIsFirstVideoPlaying(false);
                     }
                   }}
+                  style={styles.bottomVideo}
                 />
               </View>
             </Swipeable>
@@ -189,7 +188,6 @@ const DuelScreen = ({ route }) => {
 const styles = StyleSheet.create({
   fullScreen: {
     flex: 1,
-    backgroundColor: 'black',
   },
   container: {
     flex: 1,
@@ -200,36 +198,21 @@ const styles = StyleSheet.create({
   screenBackground: {
     backgroundColor: 'black',
   },
-  title: {
-    fontSize: 24,
-    color: 'white',
-    marginBottom: 10,
-  },
-  rightSwipeAction: {
-    flex: 1,
-    backgroundColor: 'black',
-  },
-  leftSwipeAction: {
+  SwipeAction: {
     flex: 1,
     backgroundColor: 'black',
   },
   videoContainer: {
     flex: 4,
     width: Dimensions.get('window').width,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   topVideo: {
-    marginTop: Dimensions.get('window').height * 0.4,
     width: '100%',
     height: '100%',
-    // resizeMode: 'stretch',
   },
   bottomVideo: {
-    marginBottom: Dimensions.get('window').height * 0.4,
     width: '100%',
     height: '100%',
-    // resizeMode: 'stretch',
   }
 });
 

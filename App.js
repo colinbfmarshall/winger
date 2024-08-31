@@ -111,11 +111,13 @@ export default function App() {
           headerTitle: () => <Header fontSize={24} color="white" />,
           headerStyle: {
             backgroundColor: 'black',
-            height: 100,
           },
           tabBarActiveTintColor: 'tomato',
-          tabBarInactiveTintColor: 'gray',
-          tabBarStyle: {},
+          tabBarInactiveTintColor: 'white',
+          tabBarStyle: {
+            backgroundColor: 'black',
+            color: 'white',
+          },
           tabBarLabel: () => null, // Remove the label
           tabBarIcon: ({ color, size = ICON_SIZE, focused }) => {
             const sport = route.name.split(' ')[0].toLowerCase();
