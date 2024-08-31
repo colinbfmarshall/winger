@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
-import { Video } from 'expo-av';
+import { Video, ResizeMode } from 'expo-av';
 import { GestureHandlerRootView, Swipeable } from 'react-native-gesture-handler';
 import * as Haptics from 'expo-haptics';
 import Constants from 'expo-constants';
@@ -115,10 +115,10 @@ const DuelScreen = ({ route }) => {
               friction={1}
               leftThreshold={10}
               rightThreshold={10}
-              renderRightActions={renderRightActions}
+              renderLeftActions={renderLeftActions}
               onSwipeableOpen={(direction) => {
-                if (direction === 'right') {
-                  onSwipeRight();
+                if (direction === 'left') {
+                  onSwipeLeft();
                 }
               }}
             >
@@ -130,12 +130,16 @@ const DuelScreen = ({ route }) => {
                   isMuted={true}
                   shouldPlay={isFirstVideoPlaying}
                   isLooping={false}
+                  useNativeControls
+                  resizeMode={ResizeMode.CONTAIN}
                   onPlaybackStatusUpdate={(status) => {
                     if (status.didJustFinish) {
+                      videoRef1.current.replayAsync();
                       setIsFirstVideoPlaying(false);
                       setIsSecondVideoPlaying(true);
                     }
                   }}
+
                   style={styles.topVideo}
                 />
               </View>
@@ -147,10 +151,10 @@ const DuelScreen = ({ route }) => {
               friction={1}
               leftThreshold={10}
               rightThreshold={10}
-              renderLeftActions={renderLeftActions}
+              renderRightActions={renderRightActions}
               onSwipeableOpen={(direction) => {
-                if (direction === 'left') {
-                  onSwipeLeft();
+                if (direction === 'right') {
+                  onSwipeRight();
                 }
               }}
             >
@@ -162,7 +166,16 @@ const DuelScreen = ({ route }) => {
                   isMuted={true}
                   shouldPlay={isSecondVideoPlaying}
                   isLooping={false}
+                  useNativeControls
+                  resizeMode={ResizeMode.CONTAIN}
                   style={styles.bottomVideo}
+                  onPlaybackStatusUpdate={(status) => {
+                    if (status.didJustFinish) {
+                      videoRef2.current.replayAsync();
+                      setIsSecondVideoPlaying(false);
+                      setIsFirstVideoPlaying(false);
+                    }
+                  }}
                 />
               </View>
             </Swipeable>
@@ -210,13 +223,13 @@ const styles = StyleSheet.create({
     marginTop: Dimensions.get('window').height * 0.4,
     width: '100%',
     height: '100%',
-    resizeMode: 'stretch',
+    // resizeMode: 'stretch',
   },
   bottomVideo: {
     marginBottom: Dimensions.get('window').height * 0.4,
     width: '100%',
     height: '100%',
-    resizeMode: 'stretch',
+    // resizeMode: 'stretch',
   }
 });
 
