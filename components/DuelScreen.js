@@ -9,9 +9,6 @@ import axios from 'axios';
 import DuelInfo from './DuelInfo';
 import DuelLoadingScreen from './DuelLoadingScreen';
 
-
-const STATUSBAR_HEIGHT = Constants.statusBarHeight;
-
 const API_URL = __DEV__ 
   ? 'https://gentle-beyond-34147-45b7e7bcdf51.herokuapp.com'
   : 'https://gentle-beyond-34147-45b7e7bcdf51.herokuapp.com';
@@ -136,9 +133,9 @@ const DuelScreen = ({ route }) => {
             <Swipeable
               key={duels[0].id}
               ref={swipeableRef1}
-              friction={1}
-              leftThreshold={10}
-              rightThreshold={10}
+              friction={2}
+              leftThreshold={50}
+              rightThreshold={50}
               renderLeftActions={renderLeftActions}
               renderRightActions={renderRightActions}
               onSwipeableOpen={(direction) => {

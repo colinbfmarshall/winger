@@ -9,11 +9,11 @@ const DuelLoadingScreen = () => {
       <View style={styles.container}>
         <View style={styles.infoContainer}>
           <Text style={styles.details}>
-            Swipe right for top
+            Swipe right to vote for the top video
           </Text>
           <Text style={styles.vs}>vs</Text>
           <Text style={styles.details}>
-            Swipe left for bottom
+            Swipe left to vote for the bottom video
           </Text>
         </View>
       </View>
