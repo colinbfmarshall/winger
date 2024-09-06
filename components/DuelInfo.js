@@ -70,7 +70,7 @@ const DuelInfo = ({ duels }) => {
               ]}
             >
               <Text style={styles.tableCellInteger}>{row.duel_stats["rank"]}</Text>
-              <Text style={styles.tableCellString}>{`${row["player"]} vs ${row["opposition"]} (${row.date})`}</Text>
+              <Text style={styles.tableCellString}>{`${row["player"]} vs ${row["opposition"]} (${row["date"]})`}</Text>
               <Text style={styles.tableCellInteger}>{row.duel_stats["duels"]}</Text>
               <Text style={styles.tableCellInteger}>{row.duel_stats["wins"]}</Text>
             </Animated.View>

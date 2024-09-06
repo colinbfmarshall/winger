@@ -63,7 +63,7 @@ const TableScreen = ({ route }) => {
         {moments.map((row, index) => (
           <View key={index} style={styles.tableRow}>
             <Text style={[styles.tableCellInteger, { fontFamily: 'Roboto_400Regular' }]}>{row.rank}</Text>
-            <Text style={[styles.tableCellString, { fontFamily: 'Roboto_400Regular' }]}>{`${row["player"]} vs ${row["opposition"]} (${row.date})`}</Text>
+            <Text style={[styles.tableCellString, { fontFamily: 'Roboto_400Regular' }]}>{`${row["player"]} vs ${row["opposition"]} (${row["date"]})`}</Text>
             <Text style={[styles.tableCellInteger, { fontFamily: 'Roboto_400Regular' }]}>{row.duels}</Text>
             <Text style={[styles.tableCellInteger, { fontFamily: 'Roboto_400Regular' }]}>{row.wins}</Text>
           </View>
