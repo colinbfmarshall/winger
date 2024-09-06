@@ -51,7 +51,7 @@ const TableScreen = ({ route }) => {
   }, []);
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView contentContainerStyle={styles.scrollContainer}>
       <Text style={[styles.title, { fontFamily: 'RobotoCondensed_700Bold' }]}>{`${sport.charAt(0).toUpperCase() + sport.slice(1)} ${DISPLAY_ACTIONS[sport]} Table`}</Text>
       <View style={styles.table}>
         <View style={styles.tableHeader}>
@@ -74,8 +74,8 @@ const TableScreen = ({ route }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  scrollContainer: {
+    flexGrow: 1,
     alignItems: 'center',
     padding: 8,
     backgroundColor: '#fdfdfd', // Slightly lighter gray background
