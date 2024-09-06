@@ -1,56 +1,8 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 
 const DuelInfo = ({ duels }) => {
   console.log('duels', duels);
-
-  const translateXAnimTop = useRef(new Animated.Value(0)).current;
-  const translateXAnimBottom = useRef(new Animated.Value(0)).current;
-  const timeoutRef = useRef(null);
-
-  const startAnimations = () => {
-    Animated.sequence([
-      Animated.timing(translateXAnimTop, {
-        toValue: 25,
-        duration: 750,
-        useNativeDriver: true,
-      }),
-      Animated.timing(translateXAnimTop, {
-        toValue: 0,
-        duration: 750,
-        useNativeDriver: true,
-      }),
-    ]).start();
-
-    Animated.sequence([
-      Animated.delay(2000), // Delay the start of the bottom row animation by 750ms
-      Animated.timing(translateXAnimBottom, {
-        toValue: -25,
-        duration: 750,
-        useNativeDriver: true,
-      }),
-      Animated.timing(translateXAnimBottom, {
-        toValue: 0,
-        duration: 750,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  };
-
-  useEffect(() => {
-    const startDelayedAnimations = () => {
-      startAnimations();
-      timeoutRef.current = setTimeout(startDelayedAnimations, 10000); // 15 seconds delay
-    };
-
-    startDelayedAnimations();
-
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, [translateXAnimTop, translateXAnimBottom]);
 
   return (
     <View style={styles.infoContainer}>
@@ -63,17 +15,12 @@ const DuelInfo = ({ duels }) => {
         </View>
         {duels.map((row, index) => (
           <React.Fragment key={index}>
-            <Animated.View
-              style={[
-                styles.tableRow,
-                { transform: [{ translateX: index === 0 ? translateXAnimTop : translateXAnimBottom }] }, // Apply animations
-              ]}
-            >
+            <View style={styles.tableRow}>
               <Text style={styles.tableCellInteger}>{row.duel_stats["rank"]}</Text>
               <Text style={styles.tableCellString}>{`${row["player"]} vs ${row["opposition"]} (${row["date"]})`}</Text>
               <Text style={styles.tableCellInteger}>{row.duel_stats["duels"]}</Text>
               <Text style={styles.tableCellInteger}>{row.duel_stats["wins"]}</Text>
-            </Animated.View>
+            </View>
             {index === 0 && (<View style={styles.staticBorder} />)}
           </React.Fragment>
         ))}
