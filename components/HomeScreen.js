@@ -31,7 +31,7 @@ const HomeScreen = ({ navigateToDuelScreen }) => {
       </Text>
       <SportButton sport="rugby tries" icon="sports-rugby" onPress={() => navigateToDuelScreen('rugby')} />
       <SportButton sport="football goals" icon="sports-soccer" onPress={() => navigateToDuelScreen('football')} />
-      <SportButton sport="golf shots" icon="golf-course" onPress={() => navigateToDuelScreen('golf')} />
+      {/* <SportButton sport="golf shots" icon="golf-course" onPress={() => navigateToDuelScreen('golf')} /> */}
       <SportButton sport="rankings" icon="table-rows" onPress={() => navigateToDuelScreen('rankings')} />
     </View>
   );

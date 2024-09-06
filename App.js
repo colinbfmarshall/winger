@@ -86,7 +86,7 @@ export default function App() {
   };
 
   const generateTabScreens = () => {
-    return ['rugby', 'football', 'golf'].map((sport, index) => (
+    return ['rugby', 'football'].map((sport, index) => (
       <Tab.Screen
         key={index}
         name={`${sport} ${state.currentScreen}`}
