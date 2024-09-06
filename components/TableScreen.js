@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import axios from 'axios';
 
-// const API_URL = __DEV__ 
-//   ? 'https://gentle-beyond-34147-45b7e7bcdf51.herokuapp.com'
-//   : 'https://gentle-beyond-34147-45b7e7bcdf51.herokuapp.com';
+const API_URL = __DEV__ 
+  ? 'https://gentle-beyond-34147-45b7e7bcdf51.herokuapp.com'
+  : 'https://gentle-beyond-34147-45b7e7bcdf51.herokuapp.com';
 
-const API_URL = "http://localhost:3000"
+// const API_URL = "http://localhost:3000"
 
 const TableScreen = ({ route }) => {
   const { sport } = route.params;
