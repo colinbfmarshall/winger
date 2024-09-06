@@ -62,29 +62,13 @@ const DuelScreen = ({ route }) => {
     .then(response => {
       const { duel_session_id, duels } = response.data;
       setDuelSessionId(duel_session_id);
-      // const updatedDuels = updateDuelOrderWithWinner(duels, winnerId);
+      
       setDuels(duels);
-
       setView('newDuel');
     })
     .catch(error => {
       console.error('There was an error starting the duel session!', error);
     });
-  };
-
-  const updateDuelOrderWithWinner = (duels, winnerId) => {
-    console.log('Winner ID:', winnerId);
-
-    const updatedDuels = duels.filter(duel => duel.id !== winnerId);
-    console.log('updatedDuels:', updatedDuels);
-    const winnerDuel = duels.find(duel => duel.id === winnerId);
-    console.log('winnerDuel:', winnerDuel);
-    if (winnerDuel) {
-      updatedDuels.splice(2, 0, winnerDuel);
-    }
-    console.log('updatedDuelsAgain:', updatedDuels);
-
-    return updatedDuels;
   };
 
   const submitWinner = (winnerId) => {
@@ -100,6 +84,7 @@ const DuelScreen = ({ route }) => {
         onComplete();
       } else if (response.data.duels) {
         setDuels(response.data.duels);
+        setWinnerId(null);
         setIsFirstVideoPlaying(true);
         setIsSecondVideoPlaying(false);  
       } else {
