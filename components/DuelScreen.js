@@ -62,8 +62,8 @@ const DuelScreen = ({ route }) => {
     .then(response => {
       const { duel_session_id, duels } = response.data;
       setDuelSessionId(duel_session_id);
-      const updatedDuels = updateDuelOrderWithWinner(duels, winnerId);
-      setDuels(updatedDuels);
+      // const updatedDuels = updateDuelOrderWithWinner(duels, winnerId);
+      setDuels(duels);
 
       setView('newDuel');
     })
