@@ -3,7 +3,8 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
 import * as React from 'react';
 import { StatusBar, SafeAreaView, StyleSheet } from 'react-native';
-import { useFonts, RobotoCondensed_400Regular, RobotoCondensed_700Bold } from '@expo-google-fonts/roboto-condensed';
+import { useFonts, RobotoCondensed_700Bold } from '@expo-google-fonts/roboto-condensed';
+import { Roboto_400Regular } from '@expo-google-fonts/roboto';
 import * as SplashScreen from 'expo-splash-screen';
 import { MaterialIcons } from '@expo/vector-icons';
 import Header from './components/Header';
@@ -27,7 +28,7 @@ export default function App() {
   const [state, setState] = React.useState({ currentSport: '', currentScreen: '' });
 
   const [fontsLoaded] = useFonts({
-    RobotoCondensed_400Regular, RobotoCondensed_700Bold
+    Roboto_400Regular, RobotoCondensed_700Bold
   });
 
   const navigationRef = React.useRef();

@@ -8,9 +8,9 @@ const ICON_SIZE = 24;
 const SportButton = ({ sport, icon, onPress }) => {
   return (
     <TouchableOpacity style={styles.row} onPress={onPress}>
-      <Text style={[styles.text, { fontFamily: 'RobotoCondensed_400Regular' }]}>Click  </Text>
+      <Text style={[styles.text, { fontFamily: 'Roboto_400Regular' }]}>Click  </Text>
       <MaterialIcons name={icon} size={ICON_SIZE} style={styles.icon} />
-      <Text style={[styles.text, { fontFamily: 'RobotoCondensed_400Regular' }]}> for {sport}</Text>
+      <Text style={[styles.text, { fontFamily: 'Roboto_400Regular' }]}> for {sport}</Text>
     </TouchableOpacity>
   );
 };
@@ -25,6 +25,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     textAlign: 'center',
     marginBottom: 12,
+    color: '#333333', // Dark gray text
   },
   icon: {
     marginBottom: 14,

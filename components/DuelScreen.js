@@ -1,10 +1,9 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, StyleSheet, Dimensions } from 'react-native';
 import { Video, ResizeMode } from 'expo-av';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import * as Haptics from 'expo-haptics';
-import Constants from 'expo-constants';
 import axios from 'axios';
 import DuelInfo from './DuelInfo';
 import DuelLoadingScreen from './DuelLoadingScreen';
@@ -13,8 +12,16 @@ const API_URL = __DEV__
   ? 'https://gentle-beyond-34147-45b7e7bcdf51.herokuapp.com'
   : 'https://gentle-beyond-34147-45b7e7bcdf51.herokuapp.com';
 
+// const API_URL = "http://localhost:3000"
+
+const ACTIONS = {
+  football: 'goal',
+  rugby: 'try',
+  golf: 'shot',
+};
+
 const DuelScreen = ({ route }) => {
-  const { sport, topicValue } = route.params;
+  const { sport } = route.params;
 
   const [duels, setDuels] = useState([]);
   const [duelSessionId, setDuelSessionId] = useState(null);
@@ -31,17 +38,9 @@ const DuelScreen = ({ route }) => {
   const videoRef2 = useRef(null);
 
   useEffect(() => {
-    startDuelSession(topicValue);
-    if (winnerId) {
-      const updatedDuels = duels.filter(duel => duel.id !== winnerId);
-      const winnerDuel = duels.find(duel => duel.id === winnerId);
-      if (winnerDuel) {
-        updatedDuels.splice(2, 0, winnerDuel);
-      }
-      setDuels(updatedDuels);
-    }
-  }, [topicValue, winnerId]);
-
+    startDuelSession();
+  }, [sport]);
+  
   useEffect(() => {
     // Show loading screen for 3 seconds
     const timer = setTimeout(() => {
@@ -51,14 +50,21 @@ const DuelScreen = ({ route }) => {
     return () => clearTimeout(timer); // Cleanup the timer
   }, []);
 
-  const startDuelSession = (topicValue) => {
+  const startDuelSession = () => {
+    // console.log('Starting duel session with parameters:', { sport: sport, action: ACTIONS[sport], player: null });
     axios.post(`${API_URL}/api/v1/duel_sessions/start`, {
-      topic_type: "action",
-      topic_value: 'try',
-    })
+      duel_session: {
+        action: ACTIONS[sport],
+        sport: sport,
+        player: null
+      }
+    })  
     .then(response => {
-      setDuels(response.data.duels);
-      setDuelSessionId(response.data.duel_session_id);
+      const { duel_session_id, duels } = response.data;
+      setDuelSessionId(duel_session_id);
+      const updatedDuels = updateDuelOrderWithWinner(duels, winnerId);
+      setDuels(updatedDuels);
+
       setView('newDuel');
     })
     .catch(error => {
@@ -66,18 +72,19 @@ const DuelScreen = ({ route }) => {
     });
   };
 
-  const vibrate = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Hard);
-  };
+  const updateDuelOrderWithWinner = (duels, winnerId) => {
+    console.log('Winner ID:', winnerId);
 
-  const onSwipeRightToLeft = () => {
-    vibrate();
-    submitWinner(duels[1].id);
-  };
+    const updatedDuels = duels.filter(duel => duel.id !== winnerId);
+    console.log('updatedDuels:', updatedDuels);
+    const winnerDuel = duels.find(duel => duel.id === winnerId);
+    console.log('winnerDuel:', winnerDuel);
+    if (winnerDuel) {
+      updatedDuels.splice(2, 0, winnerDuel);
+    }
+    console.log('updatedDuelsAgain:', updatedDuels);
 
-  const onSwipeLeftToRight = () => {
-    vibrate();
-    submitWinner(duels[0].id);
+    return updatedDuels;
   };
 
   const submitWinner = (winnerId) => {
@@ -113,6 +120,22 @@ const DuelScreen = ({ route }) => {
     });
   };
 
+  const vibrate = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Hard);
+  };
+
+  // refactor this method to be onSwipe and pass relevant ID
+  const onSwipeRightToLeft = () => {
+    vibrate();
+    submitWinner(duels[1].id);
+  };
+
+  const onSwipeLeftToRight = () => {
+    vibrate();
+    submitWinner(duels[0].id);
+  };
+
+  // refactor this method to be renderDuelStats for both
   const renderRightActions = () => {
     return <View style={styles.SwipeAction} />;
   };

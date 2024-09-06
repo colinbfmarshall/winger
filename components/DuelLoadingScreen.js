@@ -47,6 +47,7 @@ const styles = StyleSheet.create({
     color: 'white',
     height: 20, // Explicit height
     lineHeight: 20, // Ensure text is vertically centered
+    fontFamily: 'Roboto_400Regular'
   },
   vs: {
     fontSize: 16,
@@ -54,6 +55,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     height: 20, // Explicit height
     lineHeight: 20, // Ensure text is vertically centered
+    fontFamily: 'Roboto_400Regular'
   },
 });
 

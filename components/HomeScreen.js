@@ -1,7 +1,7 @@
-// components/HomeScreen.js
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { useFonts, RobotoCondensed_400Regular, RobotoCondensed_700Bold } from '@expo-google-fonts/roboto-condensed';
+import { useFonts, RobotoCondensed_700Bold } from '@expo-google-fonts/roboto-condensed';
+import { Roboto_400Regular } from '@expo-google-fonts/roboto';
 import * as SplashScreen from 'expo-splash-screen';
 import SportButton from './SportButton';
 import Header from './Header';
@@ -10,7 +10,7 @@ SplashScreen.preventAutoHideAsync();
 
 const HomeScreen = ({ navigateToDuelScreen }) => {
   let [fontsLoaded] = useFonts({
-    RobotoCondensed_400Regular, RobotoCondensed_700Bold
+    Roboto_400Regular, RobotoCondensed_700Bold
   });
 
   React.useEffect(() => {
@@ -25,8 +25,8 @@ const HomeScreen = ({ navigateToDuelScreen }) => {
 
   return (
     <View style={[styles.container, styles.screenBackground]}>
-      <Header fontSize={60} color="black" />
-      <Text style={[styles.title, { fontFamily: 'RobotoCondensed_400Regular' }]}>
+      <Header fontSize={60} color="#333333" />
+      <Text style={[styles.title, { fontFamily: 'Roboto_400Regular' }]}>
         Swipe to vote on your favourite moments
       </Text>
       <SportButton sport="rugby tries" icon="sports-rugby" onPress={() => navigateToDuelScreen('rugby')} />
@@ -45,12 +45,13 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   screenBackground: {
-    backgroundColor: 'white',
+    backgroundColor: '#fdfdfd', // Slightly lighter gray background
   },
   title: {
-    fontSize: 20,
+    fontSize: 19,
     textAlign: 'center',
     marginBottom: 40,
+    color: '#333333', // Dark gray text
   },
 });
 
