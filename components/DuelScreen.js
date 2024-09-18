@@ -2,11 +2,12 @@ import React, { useRef, useState, useEffect } from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
 import { Video, ResizeMode } from 'expo-av';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import Swipeable from 'react-native-gesture-handler/Swipeable';
+import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import * as Haptics from 'expo-haptics';
 import axios from 'axios';
 import DuelInfo from './DuelInfo';
 import DuelLoadingScreen from './DuelLoadingScreen';
+import { MaterialIcons } from '@expo/vector-icons';
 
 const API_URL = __DEV__ 
   ? 'https://gentle-beyond-34147-45b7e7bcdf51.herokuapp.com'
@@ -44,11 +45,20 @@ const DuelScreen = ({ route }) => {
   useEffect(() => {
     // Show loading screen for 3 seconds
     const timer = setTimeout(() => {
-      setIsLoading(false);
+      showLoadingScreen();
     }, 3000);
 
     return () => clearTimeout(timer); // Cleanup the timer
   }, []);
+
+  const showLoadingScreen = () => {
+    setIsLoading(true);
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 3000);
+
+    return () => clearTimeout(timer); // Cleanup the timer
+  };
 
   const startDuelSession = () => {
     // console.log('Starting duel session with parameters:', { sport: sport, action: ACTIONS[sport], player: null });
@@ -62,9 +72,9 @@ const DuelScreen = ({ route }) => {
     .then(response => {
       const { duel_session_id, duels } = response.data;
       setDuelSessionId(duel_session_id);
-      
       setDuels(duels);
       setView('newDuel');
+      showLoadingScreen();
     })
     .catch(error => {
       console.error('There was an error starting the duel session!', error);
@@ -85,6 +95,7 @@ const DuelScreen = ({ route }) => {
       } else if (response.data.duels) {
         setDuels(response.data.duels);
         setWinnerId(null);
+        showLoadingScreen();
         setIsFirstVideoPlaying(true);
         setIsSecondVideoPlaying(false);  
       } else {
@@ -109,28 +120,16 @@ const DuelScreen = ({ route }) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Hard);
   };
 
-  // refactor this method to be onSwipe and pass relevant ID
-  const onSwipeRightToLeft = () => {
-    vibrate();
-    submitWinner(duels[1].id);
-  };
-
-  const onSwipeLeftToRight = () => {
-    vibrate();
-    submitWinner(duels[0].id);
-  };
-
-  // refactor this method to be renderDuelStats for both
-  const renderRightActions = () => {
-    return <View style={styles.SwipeAction} />;
-  };
-
-  const renderLeftActions = () => {
-    return <View style={styles.SwipeAction} />;
+  const renderGoatAction = () => {
+    return( 
+      <View style={styles.SwipeAction}>
+        <MaterialIcons name='goat' size={70} style={styles.icon} />
+      </View>
+    )
   };
 
   if (isLoading) {
-    return <DuelLoadingScreen />; // Use DuelLoadingScreen component
+    return <DuelLoadingScreen duels={duels} />; // Use DuelLoadingScreen component
   }
 
   return (
@@ -141,18 +140,17 @@ const DuelScreen = ({ route }) => {
             <Swipeable
               key={duels[0].id}
               ref={swipeableRef1}
+              containerStyle={{flex: 1}} // Apply flex: 1 to the container
+              childrenContainerStyle={{}} // Apply flex: 1 to the children container
               friction={2}
               leftThreshold={50}
               rightThreshold={50}
-              renderLeftActions={renderLeftActions}
-              renderRightActions={renderRightActions}
+              renderLeftActions={renderGoatAction}
+              renderRightActions={renderGoatAction}
               onSwipeableOpen={(direction) => {
-                if (direction === 'right') {
-                  onSwipeRightToLeft();
-                }
-                if (direction === 'left') {
-                  onSwipeLeftToRight();
-                }
+                console.log('User swiped -', direction);
+                vibrate();
+                submitWinner(duels[0].id); // Submit the winner's ID
               }}
             >
               <View style={styles.videoContainer}>
@@ -164,7 +162,6 @@ const DuelScreen = ({ route }) => {
                   shouldPlay={isFirstVideoPlaying}
                   isLooping={false}
                   useNativeControls
-                  resizeMode={ResizeMode.STRETCH}
                   onPlaybackStatusUpdate={(status) => {
                     if (status.didJustFinish) {
                       videoRef1.current.replayAsync();
@@ -172,11 +169,27 @@ const DuelScreen = ({ route }) => {
                       setIsSecondVideoPlaying(true);
                     }
                   }}
-
+                  resizeMode='stretch'
                   style={styles.topVideo}
-                />
-              </View>
-              <DuelInfo duels={duels} />
+                  />
+                </View>
+              </Swipeable>
+              <Swipeable
+                key={duels[1].id}
+                ref={swipeableRef2}
+                containerStyle={{flex: 1}} // Apply flex: 1 to the container
+                childrenContainerStyle={{}} // Apply flex: 1 to the children container
+                friction={2}
+                leftThreshold={50}
+                rightThreshold={50}
+                renderLeftActions={renderGoatAction}
+                renderRightActions={renderGoatAction}
+                onSwipeableOpen={(direction) => {
+                  console.log('User swiped -', direction);
+                  vibrate();
+                  submitWinner(duels[1].id); // Submit the winner's ID
+                }}
+              >
               <View style={styles.videoContainer}>
                 <Video
                   ref={videoRef2}
@@ -186,7 +199,6 @@ const DuelScreen = ({ route }) => {
                   shouldPlay={isSecondVideoPlaying}
                   isLooping={false}
                   useNativeControls
-                  resizeMode={ResizeMode.STRETCH}
                   onPlaybackStatusUpdate={(status) => {
                     if (status.didJustFinish) {
                       videoRef2.current.replayAsync();
@@ -194,6 +206,7 @@ const DuelScreen = ({ route }) => {
                       setIsFirstVideoPlaying(false);
                     }
                   }}
+                  resizeMode='stretch'
                   style={styles.bottomVideo}
                 />
               </View>
@@ -219,6 +232,8 @@ const styles = StyleSheet.create({
   SwipeAction: {
     flex: 1,
     backgroundColor: 'black',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   videoContainer: {
     flex: 4,
@@ -231,6 +246,9 @@ const styles = StyleSheet.create({
   bottomVideo: {
     width: '100%',
     height: '100%',
+  },
+  icon: {
+    color: 'tomato',
   }
 });
 

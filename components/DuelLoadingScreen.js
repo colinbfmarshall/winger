@@ -2,18 +2,27 @@ import React from 'react';
 import { Text, View, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
-const DuelLoadingScreen = () => {
+const DuelLoadingScreen = ({ duels }) => {
+  if (!duels || duels.length < 2) {
+    return (
+      <GestureHandlerRootView style={styles.fullScreen}>
+        <View style={styles.container}>
+          <Text style={styles.helloWorld}>Swipe 4 Goat</Text>
+        </View>
+      </GestureHandlerRootView>
+    );
+  }
+
   return (
-    
     <GestureHandlerRootView style={styles.fullScreen}>
       <View style={styles.container}>
         <View style={styles.infoContainer}>
           <Text style={styles.details}>
-            Swipe right to vote for the top video
+            {duels[0].player} vs {duels[0].opposition} ({duels[0].date})
           </Text>
           <Text style={styles.vs}>vs</Text>
           <Text style={styles.details}>
-            Swipe left to vote for the bottom video
+            {duels[1].player} vs {duels[1].opposition} ({duels[1].date})
           </Text>
         </View>
       </View>
