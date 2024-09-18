@@ -31,6 +31,7 @@ const DuelScreen = ({ route }) => {
   const [isSecondVideoPlaying, setIsSecondVideoPlaying] = useState(false);
   const [winnerId, setWinnerId] = useState(null);
   const [isLoading, setIsLoading] = useState(true); // Add loading state
+  const [iconColor, setIconColor] = useState('black'); // Add state for icon color
 
 
   const swipeableRef1 = useRef(null);
@@ -53,6 +54,7 @@ const DuelScreen = ({ route }) => {
 
   const showLoadingScreen = () => {
     setIsLoading(true);
+    setIconColor('black'); // Reset the icon color
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 3000);
@@ -123,7 +125,7 @@ const DuelScreen = ({ route }) => {
   const renderGoatAction = () => {
     return( 
       <View style={styles.SwipeAction}>
-        <MaterialIcons name='goat' size={70} style={styles.icon} />
+        <MaterialIcons name='goat' size={70} color={iconColor} style={styles.icon} />
       </View>
     )
   };
@@ -167,6 +169,8 @@ const DuelScreen = ({ route }) => {
                       videoRef1.current.replayAsync();
                       setIsFirstVideoPlaying(false);
                       setIsSecondVideoPlaying(true);
+                    } else if (status.isPlaying) {
+                      setIconColor('tomato'); // Change icon color when video is playing
                     }
                   }}
                   resizeMode='stretch'
@@ -246,9 +250,6 @@ const styles = StyleSheet.create({
   bottomVideo: {
     width: '100%',
     height: '100%',
-  },
-  icon: {
-    color: 'tomato',
   }
 });
 
