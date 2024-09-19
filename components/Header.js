@@ -5,7 +5,7 @@ import { Text, StyleSheet } from 'react-native';
 const Header = ({ fontSize, color }) => {
   return (
     <Text style={[styles.header, { fontFamily: 'RobotoCondensed_700Bold', fontSize, color }]}>
-      Mano <Text style={styles.a}>a</Text> Mano
+      G<Text style={styles.a}>.</Text>O<Text style={styles.a}>.</Text>A<Text style={styles.a}>.</Text>T<Text style={styles.a}></Text>
     </Text>
   );
 };
