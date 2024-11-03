@@ -1,38 +1,30 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { View, StyleSheet, Dimensions } from 'react-native';
+import { View, StyleSheet, Dimensions, Text } from 'react-native';
 import { Video, ResizeMode } from 'expo-av';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import * as Haptics from 'expo-haptics';
 import axios from 'axios';
-import DuelInfo from './DuelInfo';
-import DuelLoadingScreen from './DuelLoadingScreen';
+import DuelLoadingScreen from '../DuelLoadingScreen';
+import DuelResultsTable from './duelResultsTable';
 import { MaterialIcons } from '@expo/vector-icons';
 
 const API_URL = __DEV__ 
-  ? 'https://gentle-beyond-34147-45b7e7bcdf51.herokuapp.com'
+  ? 'http://192.168.0.68:3000'
   : 'https://gentle-beyond-34147-45b7e7bcdf51.herokuapp.com';
 
-// const API_URL = "http://localhost:3000"
+const DuelMatchScreen = ({ match }) => {
 
-const ACTIONS = {
-  football: 'goal',
-  rugby: 'try',
-  golf: 'shot',
-};
-
-const DuelScreen = ({ route }) => {
-  const { sport } = route.params;
-
-  const [duels, setDuels] = useState([]);
-  const [duelSessionId, setDuelSessionId] = useState(null);
-  const [view, setView] = useState('initial');
+  const [currentPair, setCurrentPair] = useState([]);
+  const [matchSession, setMatchSession] = useState([]);
+  const [duelComplete, setDuelComplete] = useState(false);
+  const [duelsRemaining, setDuelsRemaining] = useState(0);
+  const [leagueTableEntries, setLeagueTableEntries] = useState([]);
+  const [globalLeagueTableEntries, setGlobalLeagueTableEntries] = useState([]);
   const [isFirstVideoPlaying, setIsFirstVideoPlaying] = useState(true);
   const [isSecondVideoPlaying, setIsSecondVideoPlaying] = useState(false);
-  const [winnerId, setWinnerId] = useState(null);
   const [isLoading, setIsLoading] = useState(true); // Add loading state
   const [iconColor, setIconColor] = useState('black'); // Add state for icon color
-
 
   const swipeableRef1 = useRef(null);
   const swipeableRef2 = useRef(null);
@@ -40,81 +32,84 @@ const DuelScreen = ({ route }) => {
   const videoRef2 = useRef(null);
 
   useEffect(() => {
-    startDuelSession();
-  }, [sport]);
-  
-  useEffect(() => {
-    // Show loading screen for 3 seconds
-    const timer = setTimeout(() => {
-      showLoadingScreen();
-    }, 3000);
+    if (match) {
+      axios.post(`${API_URL}/api/v1/matches/${match.id}/match_sessions`)
+        .then(response => {
+          const session = response.data.match_session;
+          setMatchSession(session);
+          setCurrentPair([session.remaining_moments[0][0], session.remaining_moments[0][1]]); // First duel pair
+          // Calculate the number of duels left
+          const remainingDuels = session.remaining_moments.length;
+          const completedDuels = session.completed_moments.length;
+          setDuelsRemaining(remainingDuels + completedDuels - completedDuels);
+          showLoadingScreen();
+        })
+        .catch(error => {
+          console.error('There was an error fetching the match details!', error);
+        });
+    }
+  }, [match]);
 
-    return () => clearTimeout(timer); // Cleanup the timer
-  }, []);
+  useEffect(() => {
+    if (duelComplete) {
+      axios.get(`${API_URL}/api/v1/matches/${match.id}`)
+        .then(response => {
+          const globalEntries = response.data.league_table_entries;
+          setGlobalLeagueTableEntries(globalEntries);
+        })
+        .catch(error => {
+          console.error('There was an error fetching the global league table entries!', error);
+        });
+    }
+  }, [duelComplete, match]);
+
+  const submitWinner = async (winnerMomentId) => {
+    try {
+      const response = await fetch(`${API_URL}/api/v1/matches/${match.id}/match_sessions/${matchSession.id}/submit_duel`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // 'Authorization': `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({
+          winner_id: winnerMomentId,
+          moment1_id: currentPair[0].id,
+          moment2_id: currentPair[1].id
+        })
+      });
+  
+      const data = await response.json();
+  
+      if (response.ok) {
+        if (data.completed) {
+          setDuelComplete(true); // Mark duel as complete
+          setLeagueTableEntries(data.league_table_entries); // Set league table entries
+        } else {
+          setMatchSession(data.match_session);
+          setCurrentPair([data.next_duel[0], data.next_duel[1]]); // Load the next duel pair
+          const remainingDuels = data.match_session.remaining_moments.length;
+          const completedDuels = data.match_session.completed_moments.length;
+          setDuelsRemaining(remainingDuels + completedDuels - completedDuels);
+          setIsFirstVideoPlaying(false);
+          setIsSecondVideoPlaying(true);
+          showLoadingScreen();
+        }
+      } else {
+        console.error('Failed to submit duel:', data.error);
+      }
+    } catch (error) {
+      console.error('Error submitting duel:', error);
+    }
+  };
 
   const showLoadingScreen = () => {
     setIsLoading(true);
     setIconColor('black'); // Reset the icon color
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 3000);
+    }, 2000);
 
     return () => clearTimeout(timer); // Cleanup the timer
-  };
-
-  const startDuelSession = () => {
-    axios.post(`${API_URL}/api/v1/duel_sessions/start`, {
-      duel_session: {
-        action: ACTIONS[sport],
-        sport: sport,
-        player: null
-      }
-    })  
-    .then(response => {
-      const { duel_session_id, duels } = response.data;
-      setDuelSessionId(duel_session_id);
-      setDuels(duels);
-      setView('newDuel');
-      showLoadingScreen();
-    })
-    .catch(error => {
-      console.error('There was an error starting the duel session!', error);
-    });
-  };
-
-  const submitWinner = (winnerId) => {
-    setWinnerId(winnerId);
-    axios.post(`${API_URL}/api/v1/duels/submit`, {
-      winner_id: winnerId,
-      moment1_id: duels[0].id,
-      moment2_id: duels[1].id,
-      duel_session_id: duelSessionId,
-    })
-    .then(response => {
-      if (response.data.status === 'completed') {
-        onComplete();
-      } else if (response.data.duels) {
-        setDuels(response.data.duels);
-        setWinnerId(null);
-        showLoadingScreen();
-        setIsFirstVideoPlaying(true);
-        setIsSecondVideoPlaying(false);  
-      } else {
-        // Reset the videos if no new duels are returned
-        setDuels([]);
-        setView('initial');
-      }
-      // Close the swipeable components
-      if (swipeableRef1.current) {
-        swipeableRef1.current.close();
-      }
-      if (swipeableRef2.current) {
-        swipeableRef2.current.close();
-      }
-    })
-    .catch(error => {
-      console.error('There was an error submitting the duel result!', error);
-    });
   };
 
   const vibrate = () => {
@@ -130,16 +125,26 @@ const DuelScreen = ({ route }) => {
   };
 
   if (isLoading) {
-    return <DuelLoadingScreen duels={duels} />; // Use DuelLoadingScreen component
+    return <DuelLoadingScreen duelsRemaining={duelsRemaining} duels={currentPair} />; // Use DuelLoadingScreen component
   }
+
+  if (duelComplete) {
+    return (
+      <View style={{}}>
+        <DuelResultsTable title={'Your Results'} leagueTableEntries={leagueTableEntries} />
+        <DuelResultsTable title={'Global Results'} leagueTableEntries={globalLeagueTableEntries} />
+      </View>
+    );
+  }
+
 
   return (
     <GestureHandlerRootView style={styles.fullScreen}>
       <View style={styles.container}>
-        {duels.length > 0 && (
+        {currentPair.length > 0 && (
           <>
             <Swipeable
-              key={duels[0].id}
+              key={currentPair[0].id}
               ref={swipeableRef1}
               containerStyle={{flex: 1}} // Apply flex: 1 to the container
               childrenContainerStyle={{}} // Apply flex: 1 to the children container
@@ -150,13 +155,13 @@ const DuelScreen = ({ route }) => {
               renderRightActions={renderGoatAction}
               onSwipeableOpen={(direction) => {
                 vibrate();
-                submitWinner(duels[0].id); // Submit the winner's ID
+                submitWinner(currentPair[0].id); // Submit the winner's ID
               }}
             >
               <View style={styles.videoContainer}>
                 <Video
                   ref={videoRef1}
-                  source={{ uri: duels[0].videoUrl }}
+                  source={{ uri: currentPair[0].videoUrl }}
                   rate={1.0}
                   isMuted={true}
                   shouldPlay={isFirstVideoPlaying}
@@ -177,7 +182,7 @@ const DuelScreen = ({ route }) => {
                 </View>
               </Swipeable>
               <Swipeable
-                key={duels[1].id}
+                key={currentPair[1].id}
                 ref={swipeableRef2}
                 containerStyle={{flex: 1}} // Apply flex: 1 to the container
                 childrenContainerStyle={{}} // Apply flex: 1 to the children container
@@ -188,13 +193,13 @@ const DuelScreen = ({ route }) => {
                 renderRightActions={renderGoatAction}
                 onSwipeableOpen={(direction) => {
                   vibrate();
-                  submitWinner(duels[1].id); // Submit the winner's ID
+                  submitWinner(currentPair[1].id); // Submit the winner's ID
                 }}
               >
               <View style={styles.videoContainer}>
                 <Video
                   ref={videoRef2}
-                  source={{ uri: duels[1].videoUrl }}
+                  source={{ uri: currentPair[1].videoUrl }}
                   rate={1.0}
                   isMuted={true}
                   shouldPlay={isSecondVideoPlaying}
@@ -247,7 +252,13 @@ const styles = StyleSheet.create({
   bottomVideo: {
     width: '100%',
     height: '100%',
-  }
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 15,
+    color: 'white',
+  },
 });
 
-export default DuelScreen;
+export default DuelMatchScreen;

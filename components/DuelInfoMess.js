@@ -3,8 +3,6 @@ import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 
 const DuelInfoMess = ({ duel, goat }) => {
-  console.log('duel player', duel["player"]);
-
   return (
       <View style={styles.buttonContainer}>
         <Pressable style={styles.button}>

@@ -1,22 +1,23 @@
-// components/Header.js
 import React from 'react';
-import { Text, StyleSheet } from 'react-native';
+import { Text, StyleSheet, TouchableOpacity } from 'react-native';
 
-const Header = ({ fontSize, color }) => {
+const Header = ({ fontSize, fontColor, stopColor, onPress }) => {
   return (
-    <Text style={[styles.header, { fontFamily: 'RobotoCondensed_700Bold', fontSize, color }]}>
-      G<Text style={styles.a}>.</Text>O<Text style={styles.a}>.</Text>A<Text style={styles.a}>.</Text>T<Text style={styles.a}></Text>
-    </Text>
+    <TouchableOpacity onPress={onPress}>
+      <Text style={[styles.header, { fontFamily: 'RobotoCondensed_700Bold', fontSize, color: fontColor }]}>
+        G<Text style={[styles.stop, { color: stopColor }]}>.</Text>O<Text style={[styles.stop, { color: stopColor }]}>.</Text>A<Text style={[styles.stop, { color: stopColor }]}>.</Text>T<Text style={[styles.stop, { color: stopColor }]}></Text>
+      </Text>
+    </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
   header: {
     fontWeight: 'bold',
-    marginBottom: 20,
   },
-  a: {
-    color: 'tomato',
+  stop: {
+    // Default color if stopColor prop is not provided
+    color: '#333333',
   },
 });
 

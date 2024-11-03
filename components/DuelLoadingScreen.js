@@ -2,7 +2,7 @@ import React from 'react';
 import { Text, View, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
-const DuelLoadingScreen = ({ duels }) => {
+const DuelLoadingScreen = ({ duelsRemaining, duels }) => {
   if (!duels || duels.length < 2) {
     return (
       <GestureHandlerRootView style={styles.fullScreen}>
@@ -17,6 +17,7 @@ const DuelLoadingScreen = ({ duels }) => {
     <GestureHandlerRootView style={styles.fullScreen}>
       <View style={styles.container}>
         <View style={styles.infoContainer}>
+        <Text style={styles.details}>{`Rounds Remaining: ${duelsRemaining}`}</Text>
           <Text style={styles.details}>
             {duels[0].player} vs {duels[0].opposition} ({duels[0].date})
           </Text>
@@ -56,7 +57,7 @@ const styles = StyleSheet.create({
     color: 'white',
     height: 20, // Explicit height
     lineHeight: 20, // Ensure text is vertically centered
-    fontFamily: 'Roboto_400Regular'
+    fontFamily: 'RobotoCondensed_700Bold'
   },
   vs: {
     fontSize: 16,
@@ -64,7 +65,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     height: 20, // Explicit height
     lineHeight: 20, // Ensure text is vertically centered
-    fontFamily: 'Roboto_400Regular'
+    fontFamily: 'RobotoCondensed_700Bold'
   },
 });
 

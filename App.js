@@ -1,5 +1,5 @@
-// App.js
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createStackNavigator } from '@react-navigation/stack';
 import { NavigationContainer } from '@react-navigation/native';
 import * as React from 'react';
 import { StatusBar, SafeAreaView, StyleSheet } from 'react-native';
@@ -9,14 +9,16 @@ import * as SplashScreen from 'expo-splash-screen';
 import { MaterialIcons } from '@expo/vector-icons';
 import Header from './components/Header';
 import HomeScreen from './components/HomeScreen';
-import DuelScreen from './components/DuelScreen';
-import TableScreen from './components/TableScreen';
+import MatchesScreen from './components/matches/matchesScreen';
+import MatchSessionScreen from './components/matches/matchSessionScreen';
+import DuelMatchScreen from './components/matches/duelMatchScreen';
 
 SplashScreen.preventAutoHideAsync();
 
 const ICON_SIZE = 24; // Define a constant for the icon size
 
 const Tab = createBottomTabNavigator();
+const Stack = createStackNavigator();
 
 const withSafeArea = (Component) => (props) => (
   <SafeAreaView style={styles.safeArea}>
@@ -24,14 +26,118 @@ const withSafeArea = (Component) => (props) => (
   </SafeAreaView>
 );
 
+const commonHeaderOptions = (handleHeaderPress) => ({
+  headerTitle: () => <Header fontSize={24} fontColor="white" stopColor="#333333" onPress={handleHeaderPress} />,
+  headerStyle: {
+    backgroundColor: 'tomato',
+  },
+});
+
+const TabNavigator = ({ navigationRef }) => {
+  const [state, setState] = React.useState({ currentSport: '', currentScreen: '' });
+  const [focusedTab, setFocusedTab] = React.useState('Home');
+
+  const sportIcons = {
+    football: 'sports-soccer',
+    rugby: 'sports-rugby',
+    golf: 'golf-course',
+    basketball: 'sports-basketball'
+  };
+
+  const getTabBarIcon = (sport, focused, color, size) => {
+    let iconName = sportIcons[sport];
+    return <MaterialIcons name={iconName} size={size} color={color} />;
+  };
+
+  const generateTabScreens = () => {
+    return Object.keys(sportIcons).map((sport, index) => (
+      <Tab.Screen
+        key={index}
+        name={`${sport.charAt(0).toUpperCase() + sport.slice(1)} Matches`}
+        component={withSafeArea(MatchesScreen)}
+        initialParams={{ sport }}
+        options={{
+          tabBarIcon: ({ color, size = ICON_SIZE, focused }) => getTabBarIcon(sport, focused, color, size),
+        }}
+        listeners={({ navigation }) => ({
+          tabPress: (e) => {
+            e.preventDefault();
+            setState({ currentSport: sport.toLowerCase(), currentScreen: 'Matches' });
+            setFocusedTab(`${sport.charAt(0).toUpperCase() + sport.slice(1)} Matches`);
+            navigation.navigate(`${sport.charAt(0).toUpperCase() + sport.slice(1)} Matches`, { sport });
+          },
+        })}
+      />
+    ));
+  };
+
+  const handleHeaderPress = () => {
+    setState({ currentSport: '', currentScreen: 'Home' });
+    setFocusedTab('Home');
+    navigationRef.current?.navigate('Home');
+  };
+
+  return (
+    <Tab.Navigator
+      initialRouteName="Home" // Set Home as the default view
+      screenOptions={({ route }) => ({
+        ...commonHeaderOptions(handleHeaderPress),
+        tabBarActiveTintColor: 'tomato',
+        tabBarInactiveTintColor: 'white',
+        tabBarStyle: {
+          backgroundColor: 'black',
+          color: 'white',
+        },
+        tabBarLabel: () => null, // Remove the label
+        tabBarIcon: ({ color, size, focused }) => {
+          const sport = route.name.split(' ')[0].toLowerCase();
+          return getTabBarIcon(sport, focused || focusedTab === route.name, color, size);
+        },
+      })}
+    >
+      <Tab.Screen
+        name="Home"
+        component={withSafeArea((props) => <HomeScreen {...props} />)}
+        options={{
+          tabBarButton: () => null, // Hide the Home tab button
+        }}
+      />
+      {generateTabScreens()}
+      <Tab.Screen
+        name="MatchSessionScreen"
+        component={withSafeArea(MatchSessionScreen)}
+        options={{
+          tabBarButton: () => null, // Hide the tab button
+        }}
+        listeners={({ navigation }) => ({
+          focus: () => {
+            setFocusedTab(`${state.currentSport.charAt(0).toUpperCase() + state.currentSport.slice(1)} Matches`);
+          },
+        })}
+      />
+      <Tab.Screen
+        name="DuelMatchScreen"
+        component={withSafeArea(DuelMatchScreen)}
+        options={{
+          tabBarButton: () => null, // Hide the tab button
+        }}
+        listeners={({ navigation }) => ({
+          focus: () => {
+            setFocusedTab(`${state.currentSport.charAt(0).toUpperCase() + state.currentSport.slice(1)} Matches`);
+          },
+        })}
+      />
+    </Tab.Navigator>
+  );
+};
+
 export default function App() {
   const [state, setState] = React.useState({ currentSport: '', currentScreen: '' });
+  const navigationRef = React.useRef(null);
 
   const [fontsLoaded] = useFonts({
     Roboto_400Regular, RobotoCondensed_700Bold
   });
-
-  const navigationRef = React.useRef();
 
   React.useEffect(() => {
     if (fontsLoaded) {
@@ -39,105 +145,22 @@ export default function App() {
     }
   }, [fontsLoaded]);
 
-  React.useEffect(() => {
-    if (fontsLoaded && state.currentSport && state.currentScreen) {
-      navigationRef.current?.navigate(`${state.currentSport} ${state.currentScreen}`, { sport: state.currentSport });
-    }
-  }, [fontsLoaded, state]);
-
   if (!fontsLoaded) {
     return null;
   }
 
-  const navigateToDuelScreen = (sport) => {
-    setState({ currentSport: sport.toLowerCase(), currentScreen: 'Duel' });
-    navigationRef.current?.navigate(`${sport} Duel`, { sport });
-  };
-
-  const handleTabPress = (sport) => {
-    if (sport.toLowerCase() !== state.currentSport) {
-      setState({ currentSport: sport.toLowerCase(), currentScreen: 'Duel' });
-    } else {
-      setState((prevState) => ({
-        ...prevState,
-        currentScreen: prevState.currentScreen === 'Duel' ? 'Table' : 'Duel'
-      }));
-    }
-  };
-
-  const sportIcons = {
-    football: 'sports-soccer',
-    rugby: 'sports-rugby',
-    golf: 'golf-course',
-  };
-
-  const getTabBarIcon = (sport, screen, focused, color, size) => {
-    let iconName;
-
-    if (sport === 'home') {
-      iconName = 'home';
-    } else if (focused) {
-      iconName = screen === 'Duel' ? 'table-rows' : sportIcons[sport];
-    } else {
-      iconName = sportIcons[sport];
-    }
-
-    return <MaterialIcons name={iconName} size={size} color={color} />;
-  };
-
-  const generateTabScreens = () => {
-    return ['rugby', 'football'].map((sport, index) => (
-      <Tab.Screen
-        key={index}
-        name={`${sport} ${state.currentScreen}`}
-        component={withSafeArea(state.currentScreen === 'Duel' ? DuelScreen : TableScreen)}
-        initialParams={{ sport }}
-        listeners={({ navigation }) => ({
-          tabPress: (e) => {
-            e.preventDefault();
-            handleTabPress(sport);
-            navigation.navigate(`${sport} ${state.currentScreen}`, { sport });
-          },
-        })}
-      />
-    ));
+  const handleHeaderPress = () => {
+    setState({ currentSport: '', currentScreen: 'Home' });
+    navigationRef.current?.navigate('Home');
   };
 
   return (
     <NavigationContainer ref={navigationRef}>
-      <StatusBar barStyle="light-content" />
-      <Tab.Navigator
-        initialRouteName="home" // Set Home as the default view
-        screenOptions={({ route }) => ({
-          headerTitle: () => <Header fontSize={24} color="white" />,
-          headerStyle: {
-            backgroundColor: 'black',
-          },
-          tabBarActiveTintColor: 'tomato',
-          tabBarInactiveTintColor: 'white',
-          tabBarStyle: {
-            backgroundColor: 'black',
-            color: 'white',
-          },
-          tabBarLabel: () => null, // Remove the label
-          tabBarIcon: ({ color, size = ICON_SIZE, focused }) => {
-            const sport = route.name.split(' ')[0].toLowerCase();
-            const screen = route.name.split(' ')[1];
-            return getTabBarIcon(sport, screen, focused, color, size);
-          },
-        })}
-      >
-        <Tab.Screen
-          name="home"
-          component={withSafeArea((props) => <HomeScreen {...props} navigateToDuelScreen={navigateToDuelScreen} />)}
-          options={{
-            tabBarIcon: ({ color, size = ICON_SIZE, focused }) => (
-              <MaterialIcons name="home" size={size} color={color} />
-            ),
-          }}
-        />
-        {generateTabScreens()}
-      </Tab.Navigator>
+      <Stack.Navigator screenOptions={commonHeaderOptions(handleHeaderPress)}>
+        <Stack.Screen name="Tabs" options={{ headerShown: false }}>
+          {props => <TabNavigator {...props} navigationRef={navigationRef} />}
+        </Stack.Screen>
+      </Stack.Navigator>
     </NavigationContainer>
   );
 }

@@ -2,8 +2,6 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
 const DuelInfo = ({ duels }) => {
-  console.log('duels', duels);
-
   return (
     <View style={styles.infoContainer}>
       <View style={styles.table}>

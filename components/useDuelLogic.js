@@ -46,7 +46,6 @@ const useDuelLogic = (topicValue, onComplete) => {
       duel_session_id: duelSessionId,
     })
     .then(response => {
-      console.log('Duel result submitted:', response.data);
       if (response.data.status === 'completed') {
         onComplete();
       } else if (response.data.duels) {
