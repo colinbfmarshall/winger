@@ -5,8 +5,8 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 
 const API_URL = __DEV__ 
-  ? 'http://192.168.0.68:3000'
-  : 'https://gentle-beyond-34147-45b7e7bcdf51.herokuapp.com';
+? 'http://localhost:3000'
+: 'https://gentle-beyond-34147-45b7e7bcdf51.herokuapp.com';
 
 const MatchesScreen = ({ route }) => {
   const { sport } = route.params;

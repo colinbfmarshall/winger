@@ -6,7 +6,7 @@ import RateMatchScreen from './rateMatchScreen';
 import HigherLowerMatchScreen from './higherLowerMatchScreen';
 
 const API_URL = __DEV__ 
-  ? 'http://192.168.0.68:3000'
+  ? 'http://localhost:3000'
   : 'https://gentle-beyond-34147-45b7e7bcdf51.herokuapp.com';
 
 const MatchSessionScreen = ({ route, navigation }) => {
@@ -31,15 +31,15 @@ const MatchSessionScreen = ({ route, navigation }) => {
   }
 
   if (match.match_type === 'duel') {
-    return <DuelMatchScreen match={match} authToken={authToken} />;
+    return <DuelMatchScreen match={match} matchSession={matchSession} authToken={authToken} />;
   }
 
   if (match.match_type === 'rate') {
-    return <RateMatchScreen match={match} authToken={authToken} />;
+    return <RateMatchScreen match={match} matchSession={matchSession} authToken={authToken} />;
   }
 
   if (match.match_type === 'higher_lower') {
-    return <HigherLowerMatchScreen match={match} authToken={authToken} />;
+    return <HigherLowerMatchScreen match={match} matchSession={matchSession} authToken={authToken} />;
   }
 
   return (

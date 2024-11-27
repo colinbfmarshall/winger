@@ -1,18 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Dimensions, ActivityIndicator, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import axios from 'axios';
 import { Video } from 'expo-av';
 import Slider from '@react-native-community/slider';
+import axios from 'axios';
 import RateResultsTable from './rateResultsTable';
 
 const API_URL = __DEV__ 
-  ? 'http://192.168.0.68:3000'
+  ? 'http://localhost:3000'
   : 'https://gentle-beyond-34147-45b7e7bcdf51.herokuapp.com';
 
-const RateMatchScreen = ({ match }) => {
+const RateMatchScreen = ({ match, matchSession }) => {
   const [currentMoment, setCurrentMoment] = useState(null);
-  const [matchSession, setMatchSession] = useState([]);
   const [rateComplete, setRateComplete] = useState(false);
   const [leagueTableEntries, setLeagueTableEntries] = useState([]);
   const [globalLeagueTableEntries, setGlobalLeagueTableEntries] = useState([]);
@@ -23,24 +22,11 @@ const RateMatchScreen = ({ match }) => {
   const [ratingSubmitted, setRatingSubmitted] = useState(false);
 
   useEffect(() => {
-
-    if (match) {
-      axios.post(`${API_URL}/api/v1/matches/${match.id}/match_sessions`, {}, {
-        headers: {
-          // Authorization: `Bearer ${authToken}`
-        }
-      })
-      .then(response => {
-        const session = response.data.match_session;
-        setMatchSession(session);
-        setCurrentMoment(session.remaining_moments[0]); // First moment to rate
-        setMomentsLeft(session.remaining_moments.length);
-      })
-      .catch(error => {
-        console.error('There was an error fetching the match details!', error);
-      });
+    if (matchSession) {
+      setCurrentMoment(matchSession.remaining_moments[0]); // First moment to rate
+      setMomentsLeft(matchSession.remaining_moments.length);
     }
-  }, [match]);
+  }, [matchSession]);
 
   useEffect(() => {
     setSkill(0);
@@ -93,7 +79,6 @@ const RateMatchScreen = ({ match }) => {
           setRateComplete(true); // Mark rating as complete
           setLeagueTableEntries(data.league_table_entries); // Set league table entries
         } else {
-          setMatchSession(data.match_session);
           setCurrentMoment(data.next_moment); // Load the next moment to rate
           const remainingDuels = data.match_session.remaining_moments.length;
           const completedDuels = data.match_session.completed_moments.length;
@@ -199,7 +184,7 @@ const styles = StyleSheet.create({
   },
   videoContainer: {
     flex: 1,
-    width: Dimensions.get('window').width,
+    width: '100%',
   },
   video: {
     width: '100%',
@@ -207,7 +192,7 @@ const styles = StyleSheet.create({
   },
   SwipeAction: {
     padding: 20,
-    width: Dimensions.get('window').width * .8,
+    width: '100%',
     justifyContent: 'center',
   },
   slider: {

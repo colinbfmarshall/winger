@@ -10,13 +10,11 @@ import DuelResultsTable from './duelResultsTable';
 import { MaterialIcons } from '@expo/vector-icons';
 
 const API_URL = __DEV__ 
-  ? 'http://192.168.0.68:3000'
+  ? 'http://localhost:3000'
   : 'https://gentle-beyond-34147-45b7e7bcdf51.herokuapp.com';
 
-const DuelMatchScreen = ({ match }) => {
-
+const DuelMatchScreen = ({ match, matchSession }) => {
   const [currentPair, setCurrentPair] = useState([]);
-  const [matchSession, setMatchSession] = useState([]);
   const [duelComplete, setDuelComplete] = useState(false);
   const [duelsRemaining, setDuelsRemaining] = useState(0);
   const [leagueTableEntries, setLeagueTableEntries] = useState([]);
@@ -32,23 +30,15 @@ const DuelMatchScreen = ({ match }) => {
   const videoRef2 = useRef(null);
 
   useEffect(() => {
-    if (match) {
-      axios.post(`${API_URL}/api/v1/matches/${match.id}/match_sessions`)
-        .then(response => {
-          const session = response.data.match_session;
-          setMatchSession(session);
-          setCurrentPair([session.remaining_moments[0][0], session.remaining_moments[0][1]]); // First duel pair
-          // Calculate the number of duels left
-          const remainingDuels = session.remaining_moments.length;
-          const completedDuels = session.completed_moments.length;
-          setDuelsRemaining(remainingDuels + completedDuels - completedDuels);
-          showLoadingScreen();
-        })
-        .catch(error => {
-          console.error('There was an error fetching the match details!', error);
-        });
+    if (matchSession) {
+      setCurrentPair([matchSession.remaining_moments[0][0], matchSession.remaining_moments[0][1]]); // First duel pair
+      // Calculate the number of duels left
+      const remainingDuels = matchSession.remaining_moments.length;
+      const completedDuels = matchSession.completed_moments.length;
+      setDuelsRemaining(remainingDuels + completedDuels - completedDuels);
+      showLoadingScreen();
     }
-  }, [match]);
+  }, [matchSession]);
 
   useEffect(() => {
     if (duelComplete) {
@@ -85,7 +75,6 @@ const DuelMatchScreen = ({ match }) => {
           setDuelComplete(true); // Mark duel as complete
           setLeagueTableEntries(data.league_table_entries); // Set league table entries
         } else {
-          setMatchSession(data.match_session);
           setCurrentPair([data.next_duel[0], data.next_duel[1]]); // Load the next duel pair
           const remainingDuels = data.match_session.remaining_moments.length;
           const completedDuels = data.match_session.completed_moments.length;

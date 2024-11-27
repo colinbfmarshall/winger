@@ -10,12 +10,11 @@ import { MaterialIcons } from '@expo/vector-icons';
 import HigherLowerResultsTable from './higherLowerResultsTable';
 
 const API_URL = __DEV__ 
-  ? 'http://192.168.0.68:3000'
+  ? 'http://localhost:3000'
   : 'https://gentle-beyond-34147-45b7e7bcdf51.herokuapp.com';
 
-const HigherLowerMatchScreen = ({ match }) => {
+const HigherLowerMatchScreen = ({ match, matchSession }) => {
   const [currentPair, setCurrentPair] = useState([]);
-  const [matchSession, setMatchSession] = useState([]);
   const [duelCategory, setDuelCategory] = useState('');
   const [duelComplete, setDuelComplete] = useState(false);
   const [duelWinner, setDuelWinner] = useState('');
@@ -32,25 +31,18 @@ const HigherLowerMatchScreen = ({ match }) => {
   const videoRef2 = useRef(null);
 
   useEffect(() => {
-    if (match) {
-      axios.post(`${API_URL}/api/v1/matches/${match.id}/match_sessions`)
-        .then(response => {
-          const session = response.data.match_session;
-          setMatchSession(session);
-          setCurrentPair([session.remaining_moments[0].duel_pair[0], session.remaining_moments[0].duel_pair[1]]); // First duel pair
-          setDuelCategory(session.remaining_moments[0].category);
-          setDuelWinner(session.remaining_moments[0].winning_moment);
-          // Calculate the number of duels left
-          const remainingDuels = session.remaining_moments.length;
-          const completedDuels = session.completed_moments.length;
-          setDuelsRemaining(remainingDuels + completedDuels - completedDuels);
-          showLoadingScreen();
-        })
-        .catch(error => {
-          console.error('There was an error fetching the match details!', error);
-        });
+    if (matchSession) {
+      setCurrentPair([matchSession.remaining_moments[0].duel_pair[0], matchSession.remaining_moments[0].duel_pair[1]]); // First duel pair
+      setDuelCategory(matchSession.remaining_moments[0].category);
+      setDuelWinner(matchSession.remaining_moments[0].winning_moment);
+      // Calculate the number of duels left
+      const remainingDuels = matchSession.remaining_moments.length;
+      const completedDuels = matchSession.completed_moments.length;
+      setDuelsRemaining(remainingDuels + completedDuels - completedDuels);
+      showLoadingScreen();
     }
-  }, [match]);
+  }, [matchSession]);
+
 
   useEffect(() => {
     if (duelComplete) {
@@ -86,7 +78,6 @@ const HigherLowerMatchScreen = ({ match }) => {
           setDuelComplete(true); // Mark duel as complete
           setHigherLowerResults(data.results); // Set league table entries
         } else {
-          setMatchSession(data.match_session);
           setCurrentPair([data.match_session.remaining_moments[0].duel_pair[0], data.match_session.remaining_moments[0].duel_pair[1]]); // Load the next duel pair
           setDuelCategory(data.match_session.remaining_moments[0].category);
           setDuelWinner(data.match_session.remaining_moments[0].winning_moment);
@@ -108,11 +99,11 @@ const HigherLowerMatchScreen = ({ match }) => {
   };
 
   const showLoadingScreen = () => {
-    setIsLoading(true);
+    setIsLoading(true); 
     setIconColor('black'); // Reset the icon color
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 3000);
+    }, 2000);
 
     return () => clearTimeout(timer); // Cleanup the timer
   };
