@@ -35,7 +35,8 @@
       "url": "https://u.expo.dev/220cfecf-c874-45b5-9273-670c1f204a68"
     },
     "plugins": [
-      "expo-font"
+      "expo-font",
+      "expo-video"
     ]
   }
 }
