@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { View, StyleSheet, Dimensions, Text, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Dimensions, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { Video } from 'expo-av';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
@@ -9,6 +9,7 @@ import DuelLoadingScreen from '../DuelLoadingScreen';
 import DuelResultsTable from './duelResultsTable';
 import FullScreenVideo from './fullScreenVideo';
 import ResultsTable from './resultsTable';
+import { prepareUIRegistry } from 'react-native-reanimated/lib/typescript/frameCallback/FrameCallbackRegistryUI';
 
 const API_URL = __DEV__ 
   ? 'http://localhost:3000'
@@ -177,7 +178,7 @@ const DuelMatchScreen = ({ match, matchSession }) => {
     ];
 
     return (
-      <View style={{}}>
+      <ScrollView style={styles.preview}>
         <Text style={[styles.previewTitle, { fontFamily: 'RobotoCondensed_700Bold' }]}>{match.name}</Text>
         <Text style={[styles.previewP, { fontFamily: 'Roboto_400Regular' }]}>Swipe on your favourite to choose the winner</Text>
         <ResultsTable
@@ -196,7 +197,7 @@ const DuelMatchScreen = ({ match, matchSession }) => {
             <Text style={styles.buttonText}>Play</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </ScrollView>
     )
   }
 
@@ -329,6 +330,9 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 15,
     color: 'white',
+  },
+  preview: {
+
   },
   previewTitle: {
     fontSize: 24,
