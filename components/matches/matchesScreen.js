@@ -79,12 +79,12 @@ const styles = StyleSheet.create({
   itemContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 15,
+    padding: 5,
     borderBottomWidth: 1,
     borderBottomColor: '#ddd',
   },
   itemText: {
-    fontSize: 16,
+    fontSize: 12,
   },
   name: {
     flex: 8,

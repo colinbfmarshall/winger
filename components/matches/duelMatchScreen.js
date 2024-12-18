@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { View, StyleSheet, Dimensions, Text } from 'react-native';
+import { View, StyleSheet, Dimensions, Text, TouchableOpacity } from 'react-native';
 import { Video } from 'expo-av';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
@@ -8,7 +8,7 @@ import axios from 'axios';
 import DuelLoadingScreen from '../DuelLoadingScreen';
 import DuelResultsTable from './duelResultsTable';
 import FullScreenVideo from './fullScreenVideo';
-import { MaterialIcons } from '@expo/vector-icons';
+import ResultsTable from './resultsTable';
 
 const API_URL = __DEV__ 
   ? 'http://localhost:3000'
@@ -24,7 +24,6 @@ const DuelMatchScreen = ({ match, matchSession }) => {
   const [initialVideosPlayed, setInitialVideosPlayed] = useState(false); // Track if the initial videos have been played
 
   const [isLoading, setIsLoading] = useState(true); // Add loading state
-  const [iconColor, setIconColor] = useState('black'); // Add state for icon color
 
   const swipeableRef1 = useRef(null);
   const swipeableRef2 = useRef(null);
@@ -33,12 +32,14 @@ const DuelMatchScreen = ({ match, matchSession }) => {
 
   useEffect(() => {
     if (matchSession) {
+      console.log('Match:', match);
+      console.log('Match session:', matchSession.remaining_moments);
       setCurrentPair([matchSession.remaining_moments[0][0], matchSession.remaining_moments[0][1]]); // First duel pair
       // Calculate the number of duels left
       const remainingDuels = matchSession.remaining_moments.length;
       const completedDuels = matchSession.completed_moments.length;
       setDuelsRemaining(remainingDuels + completedDuels - completedDuels);
-      showLoadingScreen();
+      showPreviewScreen();
     }
   }, [matchSession]);
 
@@ -56,6 +57,7 @@ const DuelMatchScreen = ({ match, matchSession }) => {
   }, [duelComplete, match]);
 
   const submitWinner = async (winnerMomentId) => {
+    console.log('Submitting winner:', winnerMomentId);
     try {
       const response = await fetch(`${API_URL}/api/v1/matches/${match.id}/match_sessions/${matchSession.id}/submit_duel`, {
         method: 'POST',
@@ -83,7 +85,7 @@ const DuelMatchScreen = ({ match, matchSession }) => {
           setDuelsRemaining(remainingDuels + completedDuels - completedDuels);
           setGoatPresent([data.next_duel[0].id, data.next_duel[1].id].includes(winnerMomentId)); // Set goat presence
           setInitialVideosPlayed(false)
-          showLoadingScreen();
+          // showLoadingScreen();
         }
       } else {
         console.error('Failed to submit duel:', data.error);
@@ -93,12 +95,12 @@ const DuelMatchScreen = ({ match, matchSession }) => {
     }
   };
 
-  const showLoadingScreen = () => {
+  const showPreviewScreen = () => {
     setIsLoading(true);
-    setIconColor('black'); // Reset the icon color
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 2000);
+    
+    // const timer = setTimeout(() => {
+    //   setIsLoading(false);
+    // }, 5000);
 
     return () => clearTimeout(timer); // Cleanup the timer
   };
@@ -109,24 +111,103 @@ const DuelMatchScreen = ({ match, matchSession }) => {
 
   const renderGoatAction = () => {
     return( 
-      <View style={styles.SwipeAction}>
-        <MaterialIcons name='goat' size={70} color={iconColor} style={styles.icon} />
-      </View>
+      <View style={styles.SwipeAction} />
     )
   };
 
+
   if (isLoading) {
-    return <DuelLoadingScreen duelsRemaining={duelsRemaining} duels={currentPair} />; // Use DuelLoadingScreen component
+    if (!matchSession || !matchSession.remaining_moments) {
+      return <Text style={{}}></Text>;
+    } 
+
+    const flattenedData = matchSession.remaining_moments.flat();
+
+    // Filter unique moments based on their ID
+    const uniqueMoments = Array.from(new Set(flattenedData.map(moment => moment.id)))
+      .map(id => {
+        return flattenedData.find(moment => moment.id === id);
+      });
+
+    const momentsColumns = [
+      {
+        label: 'player',
+        accessor: 'playerName',
+        render: (row) => `${row.player}`,
+        style: { textAlign: 'center', fontSize: 12, flex: 1 }, // Custom style for this column
+      },
+      {
+        label: 'opposition',
+        accessor: 'playerOpposition',
+        render: (row) => `${row.opposition}`,
+        style: { textAlign: 'center', fontSize: 12, flex: 1 }, // Custom style for this column
+      },
+      {
+        label: 'date',
+        accessor: 'player1Date',
+        render: (row) => `${row.date}`,
+        style: { textAlign: 'center', fontSize: 12, flex: 1 }, // Custom style for this column
+      },
+    ];
+
+    const getLastName = (fullName) => {
+      const parts = fullName.split(' ');
+      return parts[parts.length - 1];
+    };
+
+    const roundsColumns = [
+      {
+        label: 'moment 1',
+        accessor: 'player1',
+        render: (row) => `${getLastName(row[0].player)} (${row[0].opposition})`,
+        style: { textAlign: 'right', fontSize: 12, flex: 1 }, // Custom style for this column
+      },
+      {
+        label: '',
+        accessor: 'player2',
+        render: (row) => '-',
+        style: { textAlign: 'center', width: 50 }, // Custom style for this column
+      },
+      {
+        label: 'moment 2',
+        accessor: 'player2',
+        render: (row) => `${getLastName(row[1].player)} (${row[1].opposition})`,
+        style: { textAlign: 'left', fontSize: 12, flex: 1 }, // Custom style for this column
+      },
+    ];
+
+    return (
+      <View style={{}}>
+        <Text style={[styles.previewTitle, { fontFamily: 'RobotoCondensed_700Bold' }]}>{match.name}</Text>
+        <Text style={[styles.previewP, { fontFamily: 'Roboto_400Regular' }]}>Swipe on your favourite to choose the winner</Text>
+        <ResultsTable
+          title="Moments"
+          columns={momentsColumns}
+          data={uniqueMoments}
+        />
+
+        <ResultsTable
+          title="Rounds"
+          columns={roundsColumns}
+          data={matchSession.remaining_moments}
+        />
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity style={styles.button} onPress={() => setIsLoading(false)}>
+            <Text style={styles.buttonText}>Play</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    )
   }
 
   if (!initialVideosPlayed) {
-    console.log('initialVideosPlayed:', initialVideosPlayed);
     return (
       <View style={styles.fullScreen}>
         <FullScreenVideo
           goatPresent={goatPresent}
-          videoUrls={[currentPair[0].videoUrl, currentPair[1].videoUrl]}
+          videos={[currentPair[0], currentPair[1]]}
           setInitialVideosPlayed={setInitialVideosPlayed}
+          submitWinner={submitWinner} // Pass the submitWinner function
         />
       </View>      
     );
@@ -248,6 +329,34 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 15,
     color: 'white',
+  },
+  previewTitle: {
+    fontSize: 24,
+    textAlign: 'center',
+    marginTop: 40,
+    color: '#333333', // Dark gray text
+  },
+  previewP: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginTop: 20,
+    color: '#333333', // Dark gray text
+  },
+  buttonContainer: {
+    alignItems: 'center',
+  },
+  button: {
+    backgroundColor: 'tomato',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginTop: 10,
+    width: '80%',
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 

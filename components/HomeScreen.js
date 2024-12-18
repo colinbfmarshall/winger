@@ -5,7 +5,6 @@ import { Roboto_400Regular } from '@expo-google-fonts/roboto';
 import * as SplashScreen from 'expo-splash-screen';
 import SportButton from './SportButton';
 import Header from './Header';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -39,7 +38,7 @@ const HomeScreen = ({ navigation }) => {
       <SportButton sport="golf" icon="golf-course" onPress={() => navigateToMatchesScreen('golf')} />
       <SportButton sport="basketball" icon="sports-basketball" onPress={() => navigateToMatchesScreen('basketball')} />
 
-      <View style={styles.gameModesContainer} >
+      {/* <View style={styles.gameModesContainer} >
         <Text style={styles.gameModes}>Game modes</Text>
         <View style={styles.row}>
           <MaterialCommunityIcons name='podium-gold' size={30} style={styles.icon} />
@@ -55,7 +54,7 @@ const HomeScreen = ({ navigation }) => {
           <MaterialCommunityIcons name='arrow-up-down' size={30} style={styles.icon} />
           <Text style={[styles.text, { fontFamily: 'RobotoCondensed_700Bold' }]}>Which moment has the higher skill, swagger & impact</Text>
         </View>
-      </View>
+      </View> */}
     </View>
   );
 };

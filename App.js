@@ -27,9 +27,10 @@ const withSafeArea = (Component) => (props) => (
 );
 
 const commonHeaderOptions = (handleHeaderPress) => ({
-  headerTitle: () => <Header fontSize={24} fontColor="white" stopColor="#333333" onPress={handleHeaderPress} />,
+  headerTitle: () => <Header fontSize={20} fontColor="white" stopColor="#333333" onPress={handleHeaderPress} />,
   headerStyle: {
     backgroundColor: 'tomato',
+    height: 86,
   },
 });
 
