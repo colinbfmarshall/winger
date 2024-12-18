@@ -332,7 +332,6 @@ const styles = StyleSheet.create({
     color: 'white',
   },
   preview: {
-
   },
   previewTitle: {
     fontSize: 24,
