@@ -9,7 +9,6 @@ import DuelLoadingScreen from '../DuelLoadingScreen';
 import DuelResultsTable from './duelResultsTable';
 import FullScreenVideo from './fullScreenVideo';
 import ResultsTable from './resultsTable';
-import { prepareUIRegistry } from 'react-native-reanimated/lib/typescript/frameCallback/FrameCallbackRegistryUI';
 
 const API_URL = __DEV__ 
   ? 'http://localhost:3000'
