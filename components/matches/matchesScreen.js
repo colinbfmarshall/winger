@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import axios from 'axios';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 
 const API_URL = __DEV__ 
@@ -31,7 +32,7 @@ const MatchesScreen = ({ route }) => {
   const getIconName = (action) => {
     switch (action) {
       case 'duel':
-        return 'podium-gold';
+        return 'goat';
       case 'rate':
         return 'format-list-numbered';
       case 'higher_lower':
@@ -43,10 +44,14 @@ const MatchesScreen = ({ route }) => {
 
   const renderItem = ({ item }) => (
     <TouchableOpacity style={styles.itemContainer} onPress={() => handleSelectMatch(item)}>
-      <Text style={[styles.itemText, styles.name]}>{item.name}</Text>
-      <Text style={[styles.itemText, styles.momentGroupSize]}>{item.moment_group_size}</Text>
+    <Text style={[styles.itemText, styles.name]}>{item.name}</Text>
+    <Text style={[styles.itemText, styles.momentGroupSize]}>{item.moment_group_size}</Text>
+    {item.match_type === 'duel' ? (
+      <MaterialIcons name="goat" size={24} color="black" style={styles.icon} />
+    ) : (
       <MaterialCommunityIcons name={getIconName(item.match_type)} size={24} color="black" style={styles.icon} />
-    </TouchableOpacity>
+    )}
+  </TouchableOpacity>
   );
 
   return (
@@ -74,6 +79,8 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   listContainer: {
+    borderTopWidth: 1,
+    borderTopColor: 'tomato',
     paddingBottom: 15,
   },
   itemContainer: {

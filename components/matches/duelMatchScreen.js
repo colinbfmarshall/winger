@@ -155,42 +155,32 @@ const DuelMatchScreen = ({ match, matchSession }) => {
       return parts[parts.length - 1];
     };
 
-    const roundsColumns = [
-      {
-        label: 'moment 1',
-        accessor: 'player1',
-        render: (row) => `${getLastName(row[0].player)} (${row[0].opposition})`,
-        style: { textAlign: 'right', fontSize: 12, flex: 1 }, // Custom style for this column
-      },
-      {
-        label: '',
-        accessor: 'player2',
-        render: (row) => '-',
-        style: { textAlign: 'center', width: 50 }, // Custom style for this column
-      },
-      {
-        label: 'moment 2',
-        accessor: 'player2',
-        render: (row) => `${getLastName(row[1].player)} (${row[1].opposition})`,
-        style: { textAlign: 'left', fontSize: 12, flex: 1 }, // Custom style for this column
-      },
-    ];
-
     return (
-      <ScrollView style={styles.preview}>
+      <ScrollView contentContainerStyle={styles.preview}>
         <Text style={[styles.previewTitle, { fontFamily: 'RobotoCondensed_700Bold' }]}>{match.name}</Text>
-        <Text style={[styles.previewP, { fontFamily: 'Roboto_400Regular' }]}>Swipe on your favourite to choose the winner</Text>
         <ResultsTable
-          title="Moments"
+          title=""
           columns={momentsColumns}
           data={uniqueMoments}
         />
 
-        <ResultsTable
-          title="Rounds"
-          columns={roundsColumns}
-          data={matchSession.remaining_moments}
-        />
+        <View style={styles.howToPlay}>
+          <Text style={styles.row}>
+            <Text style={styles.strong}>How to Play:</Text>
+          </Text>
+          <Text style={styles.row}>
+            <Text style={styles.strong}>1. Watch the Moments:</Text> Two iconic sports moments will play back-to-back.
+          </Text>
+          <Text style={styles.row}>
+            <Text style={styles.strong}>2. Pick Your Favorite:</Text> Swipe on the moment you prefer to cast your vote.
+          </Text>
+          <Text style={styles.row}>
+            <Text style={styles.strong}>3. Find the GOAT:</Text> Decide the GOAT moment by voting in all head-to-head matchups.
+          </Text>
+          <Text style={styles.row}>
+            It’s that simple—watch, swipe, and crown your champion!
+          </Text>
+        </View>
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={styles.button} onPress={() => setIsLoading(false)}>
             <Text style={styles.buttonText}>Play</Text>
@@ -331,18 +321,31 @@ const styles = StyleSheet.create({
     color: 'white',
   },
   preview: {
+    flex: 1,
+    justifyContent: 'center',
+    padding: 10,
+    backgroundColor: '#fdfdfd', // Slightly lighter gray background
   },
   previewTitle: {
     fontSize: 24,
     textAlign: 'center',
-    marginTop: 40,
+    marginTop: 30,
     color: '#333333', // Dark gray text
   },
-  previewP: {
-    fontSize: 16,
-    textAlign: 'center',
-    marginTop: 20,
+  howToPlay: {
+    textAlign: 'left',
+    fontSize: 8,
+    fontFamily: 'Roboto_400Regular',
+    padding: 10,
     color: '#333333', // Dark gray text
+    backgroundColor: 'tomato', // Slightly lighter gray background
+
+  },
+  row: {
+    marginBottom: 10,
+  },
+  strong: {
+    fontWeight: 'bold',
   },
   buttonContainer: {
     alignItems: 'center',
@@ -352,7 +355,7 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 5,
     alignItems: 'center',
-    marginTop: 10,
+    margin: 10,
     width: '80%',
   },
   buttonText: {
