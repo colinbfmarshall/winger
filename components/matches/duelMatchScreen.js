@@ -1,14 +1,13 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { View, StyleSheet, Dimensions, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { View, StyleSheet, Dimensions, Text, TouchableOpacity, ScrollView, Animated } from 'react-native';
 import { Video } from 'expo-av';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import * as Haptics from 'expo-haptics';
 import axios from 'axios';
-import DuelLoadingScreen from '../DuelLoadingScreen';
-import DuelResultsTable from './duelResultsTable';
-import FullScreenVideo from './fullScreenVideo';
 import ResultsTable from './resultsTable';
+import DuelResultsTable from './duelResultsTable';
+import { MaterialIcons } from '@expo/vector-icons';
 
 const API_URL = __DEV__ 
   ? 'http://localhost:3000'
@@ -17,29 +16,23 @@ const API_URL = __DEV__
 const DuelMatchScreen = ({ match, matchSession }) => {
   const [currentPair, setCurrentPair] = useState([]);
   const [duelComplete, setDuelComplete] = useState(false);
-  const [duelsRemaining, setDuelsRemaining] = useState(0);
   const [leagueTableEntries, setLeagueTableEntries] = useState([]);
   const [globalLeagueTableEntries, setGlobalLeagueTableEntries] = useState([]);
-  const [goatPresent, setGoatPresent] = useState(false); // Track if the goat is present
-  const [initialVideosPlayed, setInitialVideosPlayed] = useState(false); // Track if the initial videos have been played
-
+  const [isFirstVideoPlaying, setIsFirstVideoPlaying] = useState(true);
+  const [isSecondVideoPlaying, setIsSecondVideoPlaying] = useState(false);
+  const [isPreviewScreen, setIsPreviewScreen] = useState(true); // Add preview screen state
   const [isLoading, setIsLoading] = useState(true); // Add loading state
 
   const swipeableRef1 = useRef(null);
   const swipeableRef2 = useRef(null);
   const videoRef1 = useRef(null);
   const videoRef2 = useRef(null);
+  const spinValue = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (matchSession) {
-      console.log('Match:', match);
-      console.log('Match session:', matchSession.remaining_moments);
       setCurrentPair([matchSession.remaining_moments[0][0], matchSession.remaining_moments[0][1]]); // First duel pair
-      // Calculate the number of duels left
-      const remainingDuels = matchSession.remaining_moments.length;
-      const completedDuels = matchSession.completed_moments.length;
-      setDuelsRemaining(remainingDuels + completedDuels - completedDuels);
-      showPreviewScreen();
+      setIsPreviewScreen(true);
     }
   }, [matchSession]);
 
@@ -57,7 +50,6 @@ const DuelMatchScreen = ({ match, matchSession }) => {
   }, [duelComplete, match]);
 
   const submitWinner = async (winnerMomentId) => {
-    console.log('Submitting winner:', winnerMomentId);
     try {
       const response = await fetch(`${API_URL}/api/v1/matches/${match.id}/match_sessions/${matchSession.id}/submit_duel`, {
         method: 'POST',
@@ -80,12 +72,9 @@ const DuelMatchScreen = ({ match, matchSession }) => {
           setLeagueTableEntries(data.league_table_entries); // Set league table entries
         } else {
           setCurrentPair([data.next_duel[0], data.next_duel[1]]); // Load the next duel pair
-          const remainingDuels = data.match_session.remaining_moments.length;
-          const completedDuels = data.match_session.completed_moments.length;
-          setDuelsRemaining(remainingDuels + completedDuels - completedDuels);
-          setGoatPresent([data.next_duel[0].id, data.next_duel[1].id].includes(winnerMomentId)); // Set goat presence
-          setInitialVideosPlayed(false)
-          // showLoadingScreen();
+          setIsFirstVideoPlaying(false);
+          setIsSecondVideoPlaying(true);
+          showLoadingScreen();
         }
       } else {
         console.error('Failed to submit duel:', data.error);
@@ -95,15 +84,37 @@ const DuelMatchScreen = ({ match, matchSession }) => {
     }
   };
 
-  const showPreviewScreen = () => {
+  const startMatchSession = () => {
+    setIsPreviewScreen(false);
+    showLoadingScreen();
+  };
+
+  const showLoadingScreen = () => {
     setIsLoading(true);
-    
-    // const timer = setTimeout(() => {
-    //   setIsLoading(false);
-    // }, 5000);
+    startSpinAnimation();
+
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 2000);
 
     return () => clearTimeout(timer); // Cleanup the timer
   };
+
+  const startSpinAnimation = () => {
+    spinValue.setValue(0);
+    Animated.loop(
+      Animated.timing(spinValue, {
+        toValue: 1,
+        duration: 3000, // Slow down the rotation
+        useNativeDriver: true,
+      })
+    ).start();
+  };
+
+  const spin = spinValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
 
   const vibrate = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Hard);
@@ -115,8 +126,7 @@ const DuelMatchScreen = ({ match, matchSession }) => {
     )
   };
 
-
-  if (isLoading) {
+  if (isPreviewScreen) {
     if (!matchSession || !matchSession.remaining_moments) {
       return <Text style={{}}></Text>;
     } 
@@ -134,19 +144,19 @@ const DuelMatchScreen = ({ match, matchSession }) => {
         label: 'player',
         accessor: 'playerName',
         render: (row) => `${row.player}`,
-        style: { textAlign: 'center', fontSize: 12, flex: 1 }, // Custom style for this column
+        style: { textAlign: 'left', fontSize: 12, flex: 1, padding: 4 }, // Custom style for this column
       },
       {
         label: 'opposition',
         accessor: 'playerOpposition',
         render: (row) => `${row.opposition}`,
-        style: { textAlign: 'center', fontSize: 12, flex: 1 }, // Custom style for this column
+        style: { textAlign: 'left', fontSize: 12, flex: 1, padding: 4 }, // Custom style for this column
       },
       {
         label: 'date',
         accessor: 'player1Date',
         render: (row) => `${row.date}`,
-        style: { textAlign: 'center', fontSize: 12, flex: 1 }, // Custom style for this column
+        style: { textAlign: 'center', fontSize: 12, flex: 1, padding: 4 }, // Custom style for this column
       },
     ];
 
@@ -159,7 +169,7 @@ const DuelMatchScreen = ({ match, matchSession }) => {
       <ScrollView contentContainerStyle={styles.preview}>
         <Text style={[styles.previewTitle, { fontFamily: 'RobotoCondensed_700Bold' }]}>{match.name}</Text>
         <ResultsTable
-          title=""
+          title="Moments" 
           columns={momentsColumns}
           data={uniqueMoments}
         />
@@ -182,7 +192,7 @@ const DuelMatchScreen = ({ match, matchSession }) => {
           </Text>
         </View>
         <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.button} onPress={() => setIsLoading(false)}>
+          <TouchableOpacity style={styles.button} onPress={() => startMatchSession()}>
             <Text style={styles.buttonText}>Play</Text>
           </TouchableOpacity>
         </View>
@@ -190,30 +200,26 @@ const DuelMatchScreen = ({ match, matchSession }) => {
     )
   }
 
-  if (!initialVideosPlayed) {
-    return (
-      <View style={styles.fullScreen}>
-        <FullScreenVideo
-          goatPresent={goatPresent}
-          videos={[currentPair[0], currentPair[1]]}
-          setInitialVideosPlayed={setInitialVideosPlayed}
-          submitWinner={submitWinner} // Pass the submitWinner function
-        />
-      </View>      
-    );
+  if (isLoading) {
+    return ( 
+      <View style={styles.SwipeAction}>
+        <Animated.View style={{ transform: [{ rotate: spin }] }}>
+          <MaterialIcons name='goat' size={70} color={'tomato'} style={styles.icon} />
+        </Animated.View>
+      </View>
+    )
   }
 
   if (duelComplete) {
     return (
-      <View style={{}}>
+      <View style={styles.fullScreen}>
         <DuelResultsTable title={'Your Results'} leagueTableEntries={leagueTableEntries} />
         <DuelResultsTable title={'Global Results'} leagueTableEntries={globalLeagueTableEntries} />
       </View>
     );
   }
 
-  if (initialVideosPlayed) {
-    return (
+  return (
     <GestureHandlerRootView style={styles.fullScreen}>
       <View style={styles.container}>
         {currentPair.length > 0 && (
@@ -239,36 +245,52 @@ const DuelMatchScreen = ({ match, matchSession }) => {
                   source={{ uri: currentPair[0].videoUrl }}
                   rate={1.0}
                   isMuted={true}
+                  shouldPlay={isFirstVideoPlaying}
                   isLooping={false}
                   useNativeControls
+                  onPlaybackStatusUpdate={(status) => {
+                    if (status.didJustFinish) {
+                      videoRef1.current.replayAsync();
+                      setIsFirstVideoPlaying(false);
+                      setIsSecondVideoPlaying(true);
+                    }
+                  }}
                   resizeMode='stretch'
                   style={styles.topVideo}
                   />
-              </View>
-            </Swipeable>
-            <Swipeable
-              key={currentPair[1].id}
-              ref={swipeableRef2}
-              containerStyle={{flex: 1}} // Apply flex: 1 to the container
-              childrenContainerStyle={{}} // Apply flex: 1 to the children container
-              friction={2}
-              leftThreshold={50}
-              rightThreshold={50}
-              renderLeftActions={renderGoatAction}
-              renderRightActions={renderGoatAction}
-              onSwipeableOpen={(direction) => {
-                vibrate();
-                submitWinner(currentPair[1].id); // Submit the winner's ID
-              }}
-            >
+                </View>
+              </Swipeable>
+              <Swipeable
+                key={currentPair[1].id}
+                ref={swipeableRef2}
+                containerStyle={{flex: 1}} // Apply flex: 1 to the container
+                childrenContainerStyle={{}} // Apply flex: 1 to the children container
+                friction={2}
+                leftThreshold={50}
+                rightThreshold={50}
+                renderLeftActions={renderGoatAction}
+                renderRightActions={renderGoatAction}
+                onSwipeableOpen={(direction) => {
+                  vibrate();
+                  submitWinner(currentPair[1].id); // Submit the winner's ID
+                }}
+              >
               <View style={styles.videoContainer}>
                 <Video
                   ref={videoRef2}
                   source={{ uri: currentPair[1].videoUrl }}
                   rate={1.0}
                   isMuted={true}
+                  shouldPlay={isSecondVideoPlaying}
                   isLooping={false}
                   useNativeControls
+                  onPlaybackStatusUpdate={(status) => {
+                    if (status.didJustFinish) {
+                      videoRef2.current.replayAsync();
+                      setIsSecondVideoPlaying(false);
+                      setIsFirstVideoPlaying(false);
+                    }
+                  }}
                   resizeMode='stretch'
                   style={styles.bottomVideo}
                 />
@@ -278,7 +300,7 @@ const DuelMatchScreen = ({ match, matchSession }) => {
         )}
       </View>
     </GestureHandlerRootView>
-  );}
+  );
 };
 
 const styles = StyleSheet.create({
@@ -330,6 +352,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     textAlign: 'center',
     marginTop: 30,
+    marginBottom: 20,
     color: '#333333', // Dark gray text
   },
   howToPlay: {
@@ -355,7 +378,7 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 5,
     alignItems: 'center',
-    margin: 10,
+    margin: 20,
     width: '80%',
   },
   buttonText: {

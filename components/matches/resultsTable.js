@@ -51,12 +51,12 @@ const ResultsTable = ({ title, columns, data }) => {
 
 const styles = StyleSheet.create({
   scrollContainer: {
-    padding: 10,
+    padding: 2,
   },
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    margin: 20,
+    marginBottom: 10,
     color: '#333333', // Dark gray text
   },
   table: {

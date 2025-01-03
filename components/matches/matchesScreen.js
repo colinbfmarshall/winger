@@ -3,60 +3,50 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native
 import axios from 'axios';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import MatchSessionScreen from './matchSessionScreen'; // Import MatchSessionScreen
 
 const API_URL = __DEV__ 
 ? 'http://localhost:3000'
 : 'https://gentle-beyond-34147-45b7e7bcdf51.herokuapp.com';
 
 const MatchesScreen = ({ route }) => {
-  const { sport } = route.params;
+  const { match_type } = route.params;
   const [matches, setMatches] = useState([]);
-  const navigation = useNavigation();
+  const [selectedMatch, setSelectedMatch] = useState(null); // State to track selected match
 
   useEffect(() => {
     // Fetch matches from your API
-    axios.get(`${API_URL}/api/v1/matches`, { params: { sport } })
+    axios.get(`${API_URL}/api/v1/matches`, { params: { match_type } })
       .then(response => {
+        console.log('Matches fetched successfully!', response.data);
         setMatches(response.data);
       })
       .catch(error => {
         console.error('There was an error fetching the matches!', error);
       });
-  }, [sport]);
+  }, [match_type]);
 
   const handleSelectMatch = (match) => {
-    navigation.navigate('MatchSessionScreen', { match });
+    console.log('Match selected:', match);
+    setSelectedMatch(match); // Set the selected match
   };
 
-  const getIconName = (action) => {
-    switch (action) {
-      case 'duel':
-        return 'goat';
-      case 'rate':
-        return 'format-list-numbered';
-      case 'higher_lower':
-        return 'arrow-up-down';
-      default:
-        return 'help-circle';
-    }
-  };
+  if (selectedMatch) {
+    // Render MatchSessionScreen if a match is selected
+    return <MatchSessionScreen match={selectedMatch} />;
+  }
 
   const renderItem = ({ item }) => (
     <TouchableOpacity style={styles.itemContainer} onPress={() => handleSelectMatch(item)}>
-    <Text style={[styles.itemText, styles.name]}>{item.name}</Text>
-    <Text style={[styles.itemText, styles.momentGroupSize]}>{item.moment_group_size}</Text>
-    {item.match_type === 'duel' ? (
-      <MaterialIcons name="goat" size={24} color="black" style={styles.icon} />
-    ) : (
-      <MaterialCommunityIcons name={getIconName(item.match_type)} size={24} color="black" style={styles.icon} />
-    )}
-  </TouchableOpacity>
+      <Text style={[styles.itemText, styles.name]}>{item.name}</Text>
+      <Text style={[styles.itemText, styles.momentGroupSize]}>{item.sport}</Text>
+      <Text style={[styles.itemText, styles.momentGroupSize]}>{item.moment_group_size}</Text>
+    </TouchableOpacity>
   );
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{sport.charAt(0).toUpperCase() + sport.slice(1)} Matches</Text>
+      <Text style={styles.title}>{match_type.charAt(0).toUpperCase() + match_type.slice(1)} Matches</Text>
       <FlatList
         data={matches}
         renderItem={renderItem}
@@ -86,7 +76,8 @@ const styles = StyleSheet.create({
   itemContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 5,
+    paddingTop: 10,
+    paddingBottom: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#ddd',
   },

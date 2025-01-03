@@ -9,8 +9,7 @@ const API_URL = __DEV__
   ? 'http://localhost:3000'
   : 'https://gentle-beyond-34147-45b7e7bcdf51.herokuapp.com';
 
-const MatchSessionScreen = ({ route, navigation }) => {
-  const { match, authToken } = route.params;
+const MatchSessionScreen = ({  match }) => {
   const [matchSession, setMatchSession] = useState(null);
 
   useEffect(() => {
@@ -31,15 +30,15 @@ const MatchSessionScreen = ({ route, navigation }) => {
   }
 
   if (match.match_type === 'duel') {
-    return <DuelMatchScreen match={match} matchSession={matchSession} authToken={authToken} />;
+    return <DuelMatchScreen match={match} matchSession={matchSession} />;
   }
 
   if (match.match_type === 'rate') {
-    return <RateMatchScreen match={match} matchSession={matchSession} authToken={authToken} />;
+    return <RateMatchScreen match={match} matchSession={matchSession} />;
   }
 
   if (match.match_type === 'higher_lower') {
-    return <HigherLowerMatchScreen match={match} matchSession={matchSession} authToken={authToken} />;
+    return <HigherLowerMatchScreen match={match} matchSession={matchSession} />;
   }
 
   return (
