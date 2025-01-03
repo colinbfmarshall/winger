@@ -49,11 +49,6 @@ const HomeScreen = ({ navigation }) => {
           <MaterialCommunityIcons name='format-list-numbered' size={30} style={styles.icon} />
           <Text style={[styles.text, { fontFamily: 'RobotoCondensed_700Bold' }]}> Score moments on skill, swagger & impact </Text>
         </View>
-
-        <View style={styles.row}>
-          <MaterialCommunityIcons name='arrow-up-down' size={30} style={styles.icon} />
-          <Text style={[styles.text, { fontFamily: 'RobotoCondensed_700Bold' }]}>Which moment has the higher skill, swagger & impact</Text>
-        </View>
       </View> */}
     </View>
   );

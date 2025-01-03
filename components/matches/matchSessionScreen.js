@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import axios from 'axios';
 import DuelMatchScreen from './duel/duelMatchScreen';
 import RateMatchScreen from './rate/rateMatchScreen';
-import HigherLowerMatchScreen from './higherLowerMatchScreen';
 
 const API_URL = __DEV__ 
   ? 'http://localhost:3000'
