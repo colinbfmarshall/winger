@@ -5,9 +5,9 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import * as Haptics from 'expo-haptics';
 import axios from 'axios';
-import ResultsTable from './resultsTable';
-import DuelResultsTable from './duelResultsTable';
-import { MaterialIcons } from '@expo/vector-icons';
+import DuelPreviewScreen from './duelPreviewScreen';
+import DuelComplete from './duelCompleteScreen';
+import LoadingScreen from '../../loadingScreen';
 
 const API_URL = __DEV__ 
   ? 'http://localhost:3000'
@@ -27,7 +27,6 @@ const DuelMatchScreen = ({ match, matchSession }) => {
   const swipeableRef2 = useRef(null);
   const videoRef1 = useRef(null);
   const videoRef2 = useRef(null);
-  const spinValue = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (matchSession) {
@@ -50,6 +49,7 @@ const DuelMatchScreen = ({ match, matchSession }) => {
   }, [duelComplete, match]);
 
   const submitWinner = async (winnerMomentId) => {
+    showLoadingScreen();
     try {
       const response = await fetch(`${API_URL}/api/v1/matches/${match.id}/match_sessions/${matchSession.id}/submit_duel`, {
         method: 'POST',
@@ -91,7 +91,6 @@ const DuelMatchScreen = ({ match, matchSession }) => {
 
   const showLoadingScreen = () => {
     setIsLoading(true);
-    startSpinAnimation();
 
     const timer = setTimeout(() => {
       setIsLoading(false);
@@ -99,22 +98,6 @@ const DuelMatchScreen = ({ match, matchSession }) => {
 
     return () => clearTimeout(timer); // Cleanup the timer
   };
-
-  const startSpinAnimation = () => {
-    spinValue.setValue(0);
-    Animated.loop(
-      Animated.timing(spinValue, {
-        toValue: 1,
-        duration: 3000, // Slow down the rotation
-        useNativeDriver: true,
-      })
-    ).start();
-  };
-
-  const spin = spinValue.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
-  });
 
   const vibrate = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Hard);
@@ -127,96 +110,15 @@ const DuelMatchScreen = ({ match, matchSession }) => {
   };
 
   if (isPreviewScreen) {
-    if (!matchSession || !matchSession.remaining_moments) {
-      return <Text style={{}}></Text>;
-    } 
-
-    const flattenedData = matchSession.remaining_moments.flat();
-
-    // Filter unique moments based on their ID
-    const uniqueMoments = Array.from(new Set(flattenedData.map(moment => moment.id)))
-      .map(id => {
-        return flattenedData.find(moment => moment.id === id);
-      });
-
-    const momentsColumns = [
-      {
-        label: 'player',
-        accessor: 'playerName',
-        render: (row) => `${row.player}`,
-        style: { textAlign: 'left', fontSize: 12, flex: 1, padding: 4 }, // Custom style for this column
-      },
-      {
-        label: 'opposition',
-        accessor: 'playerOpposition',
-        render: (row) => `${row.opposition}`,
-        style: { textAlign: 'left', fontSize: 12, flex: 1, padding: 4 }, // Custom style for this column
-      },
-      {
-        label: 'date',
-        accessor: 'player1Date',
-        render: (row) => `${row.date}`,
-        style: { textAlign: 'center', fontSize: 12, flex: 1, padding: 4 }, // Custom style for this column
-      },
-    ];
-
-    const getLastName = (fullName) => {
-      const parts = fullName.split(' ');
-      return parts[parts.length - 1];
-    };
-
-    return (
-      <ScrollView contentContainerStyle={styles.preview}>
-        <Text style={[styles.previewTitle, { fontFamily: 'RobotoCondensed_700Bold' }]}>{match.name}</Text>
-        <ResultsTable
-          title="Moments" 
-          columns={momentsColumns}
-          data={uniqueMoments}
-        />
-
-        <View style={styles.howToPlay}>
-          <Text style={styles.row}>
-            <Text style={styles.strong}>How to Play:</Text>
-          </Text>
-          <Text style={styles.row}>
-            <Text style={styles.strong}>1. Watch the Moments:</Text> Two iconic sports moments will play back-to-back.
-          </Text>
-          <Text style={styles.row}>
-            <Text style={styles.strong}>2. Pick Your Favorite:</Text> Swipe on the moment you prefer to cast your vote.
-          </Text>
-          <Text style={styles.row}>
-            <Text style={styles.strong}>3. Find the GOAT:</Text> Decide the GOAT moment by voting in all head-to-head matchups.
-          </Text>
-          <Text style={styles.row}>
-            It’s that simple—watch, swipe, and crown your champion!
-          </Text>
-        </View>
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.button} onPress={() => startMatchSession()}>
-            <Text style={styles.buttonText}>Play</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    )
+    return <DuelPreviewScreen match={match} matchSession={matchSession} startMatchSession={startMatchSession} />;
   }
 
   if (isLoading) {
-    return ( 
-      <View style={styles.SwipeAction}>
-        <Animated.View style={{ transform: [{ rotate: spin }] }}>
-          <MaterialIcons name='goat' size={70} color={'tomato'} style={styles.icon} />
-        </Animated.View>
-      </View>
-    )
+    return <LoadingScreen />;
   }
 
   if (duelComplete) {
-    return (
-      <View style={styles.fullScreen}>
-        <DuelResultsTable title={'Your Results'} leagueTableEntries={leagueTableEntries} />
-        <DuelResultsTable title={'Global Results'} leagueTableEntries={globalLeagueTableEntries} />
-      </View>
-    );
+    return <DuelComplete leagueTableEntries={leagueTableEntries} globalLeagueTableEntries={globalLeagueTableEntries} />;
   }
 
   return (
@@ -335,57 +237,7 @@ const styles = StyleSheet.create({
   fullScreenVideo: {
     width: '100%',
     height: '100%',
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 15,
-    color: 'white',
-  },
-  preview: {
-    flex: 1,
-    justifyContent: 'center',
-    padding: 10,
-    backgroundColor: '#fdfdfd', // Slightly lighter gray background
-  },
-  previewTitle: {
-    fontSize: 24,
-    textAlign: 'center',
-    marginTop: 30,
-    marginBottom: 20,
-    color: '#333333', // Dark gray text
-  },
-  howToPlay: {
-    textAlign: 'left',
-    fontSize: 8,
-    fontFamily: 'Roboto_400Regular',
-    padding: 10,
-    color: '#333333', // Dark gray text
-    backgroundColor: 'tomato', // Slightly lighter gray background
-
-  },
-  row: {
-    marginBottom: 10,
-  },
-  strong: {
-    fontWeight: 'bold',
-  },
-  buttonContainer: {
-    alignItems: 'center',
-  },
-  button: {
-    backgroundColor: 'tomato',
-    padding: 10,
-    borderRadius: 5,
-    alignItems: 'center',
-    margin: 20,
-    width: '80%',
-  },
-  buttonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
+  }
 });
 
 export default DuelMatchScreen;
