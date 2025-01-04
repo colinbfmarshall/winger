@@ -55,6 +55,7 @@ const RateMatchScreen = ({ match, matchSession }) => {
       // Alert.alert('Please select values for skill, swagger, and impact.');
       return;
     }
+    showLoadingScreen();
 
     try {
       const response = await fetch(`${API_URL}/api/v1/matches/${match.id}/match_sessions/${matchSession.id}/submit_rate`, {
@@ -136,7 +137,7 @@ const RateMatchScreen = ({ match, matchSession }) => {
         <View style={styles.videoContainer}>
           <Video
             source={{ uri: currentMoment.videoUrl }}
-            rate={1.0}
+            rate={1.2}
             isMuted={true}
             shouldPlay={true}
             isLooping={true}

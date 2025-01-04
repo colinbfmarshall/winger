@@ -1,13 +1,15 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { View, StyleSheet, Dimensions, Text, TouchableOpacity, ScrollView, Animated } from 'react-native';
+import { View, StyleSheet, Dimensions, Text, Animated } from 'react-native';
 import { Video } from 'expo-av';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import * as Haptics from 'expo-haptics';
 import axios from 'axios';
+import DuelResultsTable from './duelResultsTable';
 import DuelPreviewScreen from './duelPreviewScreen';
-import DuelComplete from './duelCompleteScreen';
 import LoadingScreen from '../../loadingScreen';
+import DuelComplete from './duelCompleteScreen';
+import { MaterialIcons } from '@expo/vector-icons';
 
 const API_URL = __DEV__ 
   ? 'http://localhost:3000'
@@ -27,6 +29,7 @@ const DuelMatchScreen = ({ match, matchSession }) => {
   const swipeableRef2 = useRef(null);
   const videoRef1 = useRef(null);
   const videoRef2 = useRef(null);
+  const scaleValue = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     if (matchSession) {
@@ -91,7 +94,7 @@ const DuelMatchScreen = ({ match, matchSession }) => {
 
   const showLoadingScreen = () => {
     setIsLoading(true);
-
+    
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 2000);
@@ -99,14 +102,33 @@ const DuelMatchScreen = ({ match, matchSession }) => {
     return () => clearTimeout(timer); // Cleanup the timer
   };
 
-  const vibrate = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Hard);
-  };
-
   const renderGoatAction = () => {
     return( 
       <View style={styles.SwipeAction} />
     )
+  };
+
+  const vibrate = (style) => {
+    Haptics.impactAsync(style);
+  };
+
+  const handleSwipeableOpen = (winnerMomentId) => {
+    vibrate(Haptics.ImpactFeedbackStyle.Light);
+    Animated.sequence([
+      Animated.timing(scaleValue, {
+        toValue: 0.90,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleValue, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      vibrate(Haptics.ImpactFeedbackStyle.Medium);
+      submitWinner(winnerMomentId);
+    });
   };
 
   if (isPreviewScreen) {
@@ -136,12 +158,9 @@ const DuelMatchScreen = ({ match, matchSession }) => {
               rightThreshold={50}
               renderLeftActions={renderGoatAction}
               renderRightActions={renderGoatAction}
-              onSwipeableOpen={(direction) => {
-                vibrate();
-                submitWinner(currentPair[0].id); // Submit the winner's ID
-              }}
+              onSwipeableOpen={() => handleSwipeableOpen(currentPair[0].id)}
             >
-              <View style={styles.videoContainer}>
+              <Animated.View style={[styles.videoContainer, { transform: [{ scale: scaleValue }] }]}>
                 <Video
                   ref={videoRef1}
                   source={{ uri: currentPair[0].videoUrl }}
@@ -159,25 +178,22 @@ const DuelMatchScreen = ({ match, matchSession }) => {
                   }}
                   resizeMode='stretch'
                   style={styles.topVideo}
-                  />
-                </View>
-              </Swipeable>
-              <Swipeable
-                key={currentPair[1].id}
-                ref={swipeableRef2}
-                containerStyle={{flex: 1}} // Apply flex: 1 to the container
-                childrenContainerStyle={{}} // Apply flex: 1 to the children container
-                friction={2}
-                leftThreshold={50}
-                rightThreshold={50}
-                renderLeftActions={renderGoatAction}
-                renderRightActions={renderGoatAction}
-                onSwipeableOpen={(direction) => {
-                  vibrate();
-                  submitWinner(currentPair[1].id); // Submit the winner's ID
-                }}
-              >
-              <View style={styles.videoContainer}>
+                />
+              </Animated.View>
+            </Swipeable>
+            <Swipeable
+              key={currentPair[1].id}
+              ref={swipeableRef2}
+              containerStyle={{flex: 1}} // Apply flex: 1 to the container
+              childrenContainerStyle={{}} // Apply flex: 1 to the children container
+              friction={2}
+              leftThreshold={50}
+              rightThreshold={50}
+              renderLeftActions={renderGoatAction}
+              renderRightActions={renderGoatAction}
+              onSwipeableOpen={() => handleSwipeableOpen(currentPair[1].id)}
+            >
+              <Animated.View style={[styles.videoContainer, { transform: [{ scale: scaleValue }] }]}>
                 <Video
                   ref={videoRef2}
                   source={{ uri: currentPair[1].videoUrl }}
@@ -196,7 +212,7 @@ const DuelMatchScreen = ({ match, matchSession }) => {
                   resizeMode='stretch'
                   style={styles.bottomVideo}
                 />
-              </View>
+              </Animated.View>
             </Swipeable>
           </>
         )}
@@ -237,7 +253,13 @@ const styles = StyleSheet.create({
   fullScreenVideo: {
     width: '100%',
     height: '100%',
-  }
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 15,
+    color: 'white',
+  },
 });
 
 export default DuelMatchScreen;

@@ -49,24 +49,6 @@ const DuelPreviewScreen = ({ match, matchSession, startMatchSession }) => {
         columns={momentsColumns}
         data={uniqueMoments}
       />
-
-      <View style={styles.howToPlay}>
-        <Text style={styles.row}>
-          <Text style={styles.strong}>How to Play:</Text>
-        </Text>
-        <Text style={styles.row}>
-          <Text style={styles.strong}>1. Watch the Moments:</Text> Two iconic sports moments will play back-to-back.
-        </Text>
-        <Text style={styles.row}>
-          <Text style={styles.strong}>2. Pick Your Favorite:</Text> Swipe on the moment you prefer to cast your vote.
-        </Text>
-        <Text style={styles.row}>
-          <Text style={styles.strong}>3. Find the GOAT:</Text> Decide the GOAT moment by voting in all head-to-head matchups.
-        </Text>
-        <Text style={styles.row}>
-          It’s that simple—watch, swipe, and crown your champion!
-        </Text>
-      </View>
       <View style={styles.buttonContainer}>
         <TouchableOpacity style={styles.button} onPress={startMatchSession}>
           <Text style={styles.buttonText}>Play</Text>

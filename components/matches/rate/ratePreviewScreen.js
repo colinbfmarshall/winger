@@ -45,23 +45,6 @@ const RateMatchPreview = ({ match, matchSession, startMatchSession }) => {
         data={uniqueMoments}
       />
 
-      <View style={styles.howToPlay}>
-        <Text style={styles.row}>
-          <Text style={styles.strong}>How to Play:</Text>
-        </Text>
-        <Text style={styles.row}>
-          <Text style={styles.strong}>1. Watch the Moment:</Text> An iconic sports moments will play.
-        </Text>
-        <Text style={styles.row}>
-          <Text style={styles.strong}>2. Rate the Moment:</Text> Use the sliders to rate the moment.
-        </Text>
-        <Text style={styles.row}>
-          <Text style={styles.strong}>3. Find the GOAT:</Text> Decide the GOAT moment by rating all moments.
-        </Text>
-        <Text style={styles.row}>
-          It’s that simple—watch, rate, and crown your champion!
-        </Text>
-      </View>
       <View style={styles.buttonContainer}>
         <TouchableOpacity style={styles.button} onPress={startMatchSession}>
           <Text style={styles.buttonText}>Play</Text>
