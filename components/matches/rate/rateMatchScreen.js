@@ -13,7 +13,8 @@ const API_URL = __DEV__
   ? 'http://localhost:3000'
   : 'https://gentle-beyond-34147-45b7e7bcdf51.herokuapp.com';
 
-const RateMatchScreen = ({ match, matchSession }) => {
+const RateMatchScreen = ({ match }) => {
+  const [matchSession, setMatchSession] = useState(null);
   const [currentMoment, setCurrentMoment] = useState(null);
   const [rateComplete, setRateComplete] = useState(false);
   const [leagueTableEntries, setLeagueTableEntries] = useState([]);
@@ -23,13 +24,6 @@ const RateMatchScreen = ({ match, matchSession }) => {
   const [ratingSubmitted, setRatingSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(true); // Add loading state
   const [isPreviewScreen, setIsPreviewScreen] = useState(true); // Add preview screen state
-
-  useEffect(() => {
-    if (matchSession) {
-      setCurrentMoment(matchSession.remaining_moments[0]); // First moment to rate
-      setIsPreviewScreen(true);
-    }
-  }, [matchSession]);
 
   useEffect(() => {
     setSkill(0);
@@ -92,8 +86,17 @@ const RateMatchScreen = ({ match, matchSession }) => {
   };
 
   const startMatchSession = () => {
-    setIsPreviewScreen(false);
-    showLoadingScreen();
+    axios.post(`${API_URL}/api/v1/matches/${match.id}/match_sessions`)
+    .then(response => {
+      const matchSession = response.data.match_session;
+      setMatchSession(matchSession);
+      setCurrentMoment(matchSession.remaining_moments[0]); // First moment to rate
+      setIsPreviewScreen(false);
+      showLoadingScreen();
+    })
+    .catch(error => {
+      console.error('There was an error fetching the match details!', error);
+    });
   };
 
   const showLoadingScreen = () => {
@@ -107,7 +110,8 @@ const RateMatchScreen = ({ match, matchSession }) => {
   };
 
   if (isPreviewScreen) {
-    return <RatePreviewScreen match={match} matchSession={matchSession} startMatchSession={startMatchSession} />;
+    console.log('Match PREVIEW SCREEN:', match);
+    return <RatePreviewScreen match={match} startMatchSession={startMatchSession} />;
   }
 
   if (isLoading) {

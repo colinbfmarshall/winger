@@ -5,17 +5,17 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import * as Haptics from 'expo-haptics';
 import axios from 'axios';
-import DuelResultsTable from './duelResultsTable';
 import DuelPreviewScreen from './duelPreviewScreen';
 import LoadingScreen from '../../loadingScreen';
 import DuelComplete from './duelCompleteScreen';
-import { MaterialIcons } from '@expo/vector-icons';
 
 const API_URL = __DEV__ 
   ? 'http://localhost:3000'
   : 'https://gentle-beyond-34147-45b7e7bcdf51.herokuapp.com';
 
-const DuelMatchScreen = ({ match, matchSession }) => {
+const DuelMatchScreen = ({ match }) => {
+  const [matchSession, setMatchSession] = useState(null);
+
   const [currentPair, setCurrentPair] = useState([]);
   const [duelComplete, setDuelComplete] = useState(false);
   const [leagueTableEntries, setLeagueTableEntries] = useState([]);
@@ -31,14 +31,7 @@ const DuelMatchScreen = ({ match, matchSession }) => {
   const videoRef2 = useRef(null);
   const scaleValue = useRef(new Animated.Value(1)).current;
 
-  useEffect(() => {
-    if (matchSession) {
-      setCurrentPair([matchSession.remaining_moments[0][0], matchSession.remaining_moments[0][1]]); // First duel pair
-      setIsPreviewScreen(true);
-    }
-  }, [matchSession]);
-
-  useEffect(() => {
+  useEffect(() => {    
     if (duelComplete) {
       axios.get(`${API_URL}/api/v1/matches/${match.id}`)
         .then(response => {
@@ -88,8 +81,17 @@ const DuelMatchScreen = ({ match, matchSession }) => {
   };
 
   const startMatchSession = () => {
-    setIsPreviewScreen(false);
-    showLoadingScreen();
+    axios.post(`${API_URL}/api/v1/matches/${match.id}/match_sessions`)
+    .then(response => {
+      const matchSession = response.data.match_session;
+      setMatchSession(matchSession);
+      setCurrentPair([matchSession.remaining_moments[0][0], matchSession.remaining_moments[0][1]]); // First duel pair
+      setIsPreviewScreen(false);
+      showLoadingScreen();
+    })
+    .catch(error => {
+      console.error('There was an error fetching the match details!', error);
+    });
   };
 
   const showLoadingScreen = () => {
@@ -102,6 +104,7 @@ const DuelMatchScreen = ({ match, matchSession }) => {
     return () => clearTimeout(timer); // Cleanup the timer
   };
 
+  
   const renderGoatAction = () => {
     return( 
       <View style={styles.SwipeAction} />
@@ -132,7 +135,7 @@ const DuelMatchScreen = ({ match, matchSession }) => {
   };
 
   if (isPreviewScreen) {
-    return <DuelPreviewScreen match={match} matchSession={matchSession} startMatchSession={startMatchSession} />;
+    return <DuelPreviewScreen match={match} startMatchSession={startMatchSession} />;
   }
 
   if (isLoading) {

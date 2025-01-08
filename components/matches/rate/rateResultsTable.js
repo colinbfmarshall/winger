@@ -11,8 +11,7 @@ const DuelResultsTable = ({ title, leagueTableEntries }) => {
           <Text style={[styles.tableHeaderText, { fontFamily: 'RobotoCondensed_700Bold' }]}>Player</Text>
           <Text style={[styles.tableHeaderInteger, { fontFamily: 'RobotoCondensed_700Bold' }]}>Skill</Text>
           <Text style={[styles.tableHeaderInteger, { fontFamily: 'RobotoCondensed_700Bold' }]}>Swagger</Text>
-          <Text style={[styles.tableHeaderInteger, { fontFamily: 'RobotoCondensed_700Bold' }]}>Impact</Text>
-          <Text style={[styles.tableHeaderInteger, { fontFamily: 'RobotoCondensed_700Bold' }]}>Score</Text>
+          <Text style={[styles.tableHeaderInteger, { fontFamily: 'RobotoCondensed_700Bold' }]}>Overall</Text>
         </View>
         {leagueTableEntries.map((row, index) => (
           <View key={index} style={styles.tableRow}>
@@ -20,7 +19,6 @@ const DuelResultsTable = ({ title, leagueTableEntries }) => {
             <Text style={[styles.tableCellString, { fontFamily: 'Roboto_400Regular' }]}>{`${row.moment.player} vs ${row.moment.opposition}`}</Text>
             <Text style={[styles.tableCellInteger, { fontFamily: 'Roboto_400Regular' }]}>{row.rating_skill}</Text>
             <Text style={[styles.tableCellInteger, { fontFamily: 'Roboto_400Regular' }]}>{row.rating_swagger}</Text>
-            <Text style={[styles.tableCellInteger, { fontFamily: 'Roboto_400Regular' }]}>{row.rating_impact}</Text>
             <Text style={[styles.tableCellInteger, { fontFamily: 'Roboto_400Regular' }]}>{row.combined_score}</Text>
           </View>
         ))}

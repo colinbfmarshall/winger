@@ -1,49 +1,33 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
-import ResultsTable from '../resultsTable';
+import RateResultsTable from './rateResultsTable';
 
-const RateMatchPreview = ({ match, matchSession, startMatchSession }) => {
-  if (!matchSession || !matchSession.remaining_moments) {
-    return <Text style={{}}></Text>;
-  }
+const API_URL = __DEV__ 
+  ? 'http://localhost:3000'
+  : 'https://gentle-beyond-34147-45b7e7bcdf51.herokuapp.com';
 
-  const flattenedData = matchSession.remaining_moments.flat();
+const RateMatchPreview = ({ match, startMatchSession }) => {
+  const [globalLeagueTableEntries, setGlobalLeagueTableEntries] = useState([]);
 
-  // Filter unique moments based on their ID
-  const uniqueMoments = Array.from(new Set(flattenedData.map(moment => moment.id)))
-    .map(id => {
-      return flattenedData.find(moment => moment.id === id);
-    });
-
-  const momentsColumns = [
-    {
-      label: 'player',
-      accessor: 'playerName',
-      render: (row) => `${row.player}`,
-      style: { textAlign: 'left', fontSize: 12, flex: 1, padding: 4 }, // Custom style for this column
-    },
-    {
-      label: 'opposition',
-      accessor: 'playerOpposition',
-      render: (row) => `${row.opposition}`,
-      style: { textAlign: 'left', fontSize: 12, flex: 1, padding: 4 }, // Custom style for this column
-    },
-    {
-      label: 'date',
-      accessor: 'player1Date',
-      render: (row) => `${row.date}`,
-      style: { textAlign: 'center', fontSize: 12, flex: 1, padding: 4 }, // Custom style for this column
-    },
-  ];
+  useEffect(() => {    
+    if (match) {
+      axios.get(`${API_URL}/api/v1/matches/${match.id}`)
+        .then(response => {
+          console.log('response.data.league_table_entries:', response.data.league_table_entries);
+          const globalEntries = response.data.league_table_entries;
+          setGlobalLeagueTableEntries(globalEntries);
+        })
+        .catch(error => {
+          console.error('There was an error fetching the global league table entries!', error);
+        });
+    }
+  }, [match]);
 
   return (
     <ScrollView contentContainerStyle={styles.preview}>
       <Text style={[styles.previewTitle, { fontFamily: 'RobotoCondensed_700Bold' }]}>{match.name}</Text>
-      <ResultsTable
-        title="Moments" 
-        columns={momentsColumns}
-        data={uniqueMoments}
-      />
+      <RateResultsTable leagueTableEntries={globalLeagueTableEntries} />
 
       <View style={styles.buttonContainer}>
         <TouchableOpacity style={styles.button} onPress={startMatchSession}>

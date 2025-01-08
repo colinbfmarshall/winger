@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import axios from 'axios';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import MatchSessionScreen from './matchSessionScreen'; // Import MatchSessionScreen
+
+import DuelMatchScreen from './duel/duelMatchScreen';
+import RateMatchScreen from './rate/rateMatchScreen';
 
 const API_URL = __DEV__ 
 ? 'http://localhost:3000'
@@ -32,8 +34,13 @@ const MatchesScreen = ({ route }) => {
   };
 
   if (selectedMatch) {
-    // Render MatchSessionScreen if a match is selected
-    return <MatchSessionScreen match={selectedMatch} />;
+    if (selectedMatch.match_type === 'duel') {
+      return <DuelMatchScreen match={selectedMatch} />;
+    }
+  
+    if (selectedMatch.match_type === 'rate') {
+      return <RateMatchScreen match={selectedMatch} />;
+    }
   }
 
   const renderItem = ({ item }) => (
