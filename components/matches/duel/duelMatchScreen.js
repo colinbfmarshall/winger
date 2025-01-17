@@ -29,7 +29,8 @@ const DuelMatchScreen = ({ match }) => {
   const swipeableRef2 = useRef(null);
   const videoRef1 = useRef(null);
   const videoRef2 = useRef(null);
-  const scaleValue = useRef(new Animated.Value(1)).current;
+  const opacityValue = useRef(new Animated.Value(1)).current;
+
 
   useEffect(() => {    
     if (duelComplete) {
@@ -67,6 +68,7 @@ const DuelMatchScreen = ({ match }) => {
           setDuelComplete(true); // Mark duel as complete
           setLeagueTableEntries(data.league_table_entries); // Set league table entries
         } else {
+          opacityValue.setValue(1)
           setCurrentPair([data.next_duel[0], data.next_duel[1]]); // Load the next duel pair
           setIsFirstVideoPlaying(false);
           setIsSecondVideoPlaying(true);
@@ -104,7 +106,6 @@ const DuelMatchScreen = ({ match }) => {
     return () => clearTimeout(timer); // Cleanup the timer
   };
 
-  
   const renderGoatAction = () => {
     return( 
       <View style={styles.SwipeAction} />
@@ -118,14 +119,9 @@ const DuelMatchScreen = ({ match }) => {
   const handleSwipeableOpen = (winnerMomentId) => {
     vibrate(Haptics.ImpactFeedbackStyle.Light);
     Animated.sequence([
-      Animated.timing(scaleValue, {
-        toValue: 0.90,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-      Animated.timing(scaleValue, {
-        toValue: 1,
-        duration: 100,
+      Animated.timing(opacityValue, {
+        toValue: 0,
+        duration: 1000,
         useNativeDriver: true,
       }),
     ]).start(() => {
@@ -163,12 +159,12 @@ const DuelMatchScreen = ({ match }) => {
               renderRightActions={renderGoatAction}
               onSwipeableOpen={() => handleSwipeableOpen(currentPair[0].id)}
             >
-              <Animated.View style={[styles.videoContainer, { transform: [{ scale: scaleValue }] }]}>
+              <Animated.View style={[styles.videoContainer, { opacity: opacityValue }]}>
                 <Video
                   ref={videoRef1}
                   source={{ uri: currentPair[0].videoUrl }}
-                  rate={1.0}
-                  isMuted={true}
+                  rate={1.1}
+                  isMuted={false}
                   shouldPlay={isFirstVideoPlaying}
                   isLooping={false}
                   useNativeControls
@@ -196,12 +192,12 @@ const DuelMatchScreen = ({ match }) => {
               renderRightActions={renderGoatAction}
               onSwipeableOpen={() => handleSwipeableOpen(currentPair[1].id)}
             >
-              <Animated.View style={[styles.videoContainer, { transform: [{ scale: scaleValue }] }]}>
+              <Animated.View style={[styles.videoContainer, { opacity: opacityValue }]}>
                 <Video
                   ref={videoRef2}
                   source={{ uri: currentPair[1].videoUrl }}
-                  rate={1.0}
-                  isMuted={true}
+                  rate={1.1}
+                  isMuted={false}
                   shouldPlay={isSecondVideoPlaying}
                   isLooping={false}
                   useNativeControls
