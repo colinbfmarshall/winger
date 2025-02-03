@@ -139,7 +139,7 @@ const ScrambleMatchScreen = () => {
                 <Video
                   ref={videoRef1}
                   source={{ uri: currentPair[0].videoUrl }}
-                  rate={1.2}
+                  rate={1.1}
                   isMuted={false}
                   shouldPlay={isFirstVideoPlaying}
                   isLooping={false}
@@ -172,7 +172,7 @@ const ScrambleMatchScreen = () => {
                 <Video
                   ref={videoRef2}
                   source={{ uri: currentPair[1].videoUrl }}
-                  rate={1.2}
+                  rate={1.1}
                   isMuted={false}
                   shouldPlay={isSecondVideoPlaying}
                   isLooping={false}
