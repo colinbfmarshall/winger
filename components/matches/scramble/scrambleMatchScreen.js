@@ -5,24 +5,19 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import * as Haptics from 'expo-haptics';
 import axios from 'axios';
-import DuelPreviewScreen from './duelPreviewScreen';
 import LoadingScreen from '../../loadingScreen';
-import DuelComplete from './duelCompleteScreen';
 
 const API_URL = __DEV__ 
   ? 'http://localhost:3000'
   : 'https://gentle-beyond-34147-45b7e7bcdf51.herokuapp.com';
 
-const DuelMatchScreen = ({ match }) => {
+const ScrambleMatchScreen = () => {
+  console.log('ScrambleMatchScreen');
+  const [MatchId, setMatchId] = useState(null);
   const [matchSession, setMatchSession] = useState(null);
-
   const [currentPair, setCurrentPair] = useState([]);
-  const [duelComplete, setDuelComplete] = useState(false);
-  const [leagueTableEntries, setLeagueTableEntries] = useState([]);
-  const [globalLeagueTableEntries, setGlobalLeagueTableEntries] = useState([]);
   const [isFirstVideoPlaying, setIsFirstVideoPlaying] = useState(true);
   const [isSecondVideoPlaying, setIsSecondVideoPlaying] = useState(false);
-  const [isPreviewScreen, setIsPreviewScreen] = useState(true); // Add preview screen state
   const [isLoading, setIsLoading] = useState(true); // Add loading state
 
   const swipeableRef1 = useRef(null);
@@ -31,24 +26,15 @@ const DuelMatchScreen = ({ match }) => {
   const videoRef2 = useRef(null);
   const opacityValue = useRef(new Animated.Value(1)).current;
 
-
-  useEffect(() => {    
-    if (duelComplete) {
-      axios.get(`${API_URL}/api/v1/matches/${match.id}`)
-        .then(response => {
-          const globalEntries = response.data.league_table_entries;
-          setGlobalLeagueTableEntries(globalEntries);
-        })
-        .catch(error => {
-          console.error('There was an error fetching the global league table entries!', error);
-        });
-    }
-  }, [duelComplete, match]);
+  useEffect(() => {
+    startMatchSession();
+  }, []);
 
   const submitWinner = async (winnerMomentId) => {
+    console.log('submitWinner', winnerMomentId);
     showLoadingScreen();
     try {
-      const response = await fetch(`${API_URL}/api/v1/matches/${match.id}/match_sessions/${matchSession.id}/submit_duel`, {
+      const response = await fetch(`${API_URL}/api/v1/matches/${MatchId}/match_sessions/${matchSession.id}/submit_scramble`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -58,35 +44,38 @@ const DuelMatchScreen = ({ match }) => {
           winner_id: winnerMomentId,
         })
       });
+  
       const data = await response.json();
   
       if (response.ok) {
         if (data.completed) {
-          setDuelComplete(true); // Mark duel as complete
+          setMatchSession({ ...matchSession, completed: true }); // Mark scramble as complete
           setLeagueTableEntries(data.league_table_entries); // Set league table entries
         } else {
-          opacityValue.setValue(1)
-          setCurrentPair([data.next_duel[0], data.next_duel[1]]); // Load the next duel pair
-          setIsFirstVideoPlaying(false);
-          setIsSecondVideoPlaying(true);
+          opacityValue.setValue(1); // Reset opacity value
+          console.log('data.next_duel:', data.next_duel);
+          setCurrentPair([data.next_duel[0], data.next_duel[1]]); // Load the next scramble pair
+          setIsFirstVideoPlaying(true);
+          setIsSecondVideoPlaying(false);
           showLoadingScreen();
         }
       } else {
-        console.error('Failed to submit duel:', data.error);
+        console.error('Failed to submit scramble:', data.error);
       }
     } catch (error) {
-      console.error('Error submitting duel:', error);
+      console.error('Error submitting scramble:', error);
     }
   };
 
   const startMatchSession = () => {
-    axios.post(`${API_URL}/api/v1/matches/${match.id}/match_sessions`)
+    axios.post(`${API_URL}/api/v1/matches/create_scramble_match`)
     .then(response => {
       const matchSession = response.data.match_session;
+      console.log('Match session:', matchSession);
+      setMatchId(matchSession.match_id);
       setMatchSession(matchSession);
-      setCurrentPair([matchSession.remaining_moments[0][0], matchSession.remaining_moments[0][1]]); // First duel pair
-      setIsPreviewScreen(false);
-      showLoadingScreen();
+      setCurrentPair([matchSession.remaining_moments[0][0], matchSession.remaining_moments[0][1]]); // First scramble pair
+      setIsLoading(false);
     })
     .catch(error => {
       console.error('There was an error fetching the match details!', error);
@@ -98,9 +87,13 @@ const DuelMatchScreen = ({ match }) => {
     
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 2000);
+    }, 1500);
 
     return () => clearTimeout(timer); // Cleanup the timer
+  };
+
+  const vibrate = (style) => {
+    Haptics.impactAsync(style);
   };
 
   const renderGoatAction = () => {
@@ -109,34 +102,20 @@ const DuelMatchScreen = ({ match }) => {
     )
   };
 
-  const vibrate = (style) => {
-    Haptics.impactAsync(style);
-  };
-
-  const handleSwipeableOpen = (winnerMomentId) => {
+  const handleSwipeableOpen = (winnerMomentId, loserMomentId) => {
     vibrate(Haptics.ImpactFeedbackStyle.Light);
-    Animated.sequence([
-      Animated.timing(opacityValue, {
-        toValue: 0,
-        duration: 1000,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
+    Animated.timing(opacityValue, {
+      toValue: 0,
+      duration: 1000,
+      useNativeDriver: true,
+    }).start(() => {
       vibrate(Haptics.ImpactFeedbackStyle.Medium);
       submitWinner(winnerMomentId);
     });
   };
 
-  if (isPreviewScreen) {
-    return <DuelPreviewScreen match={match} startMatchSession={startMatchSession} />;
-  }
-
   if (isLoading) {
     return <LoadingScreen />;
-  }
-
-  if (duelComplete) {
-    return <DuelComplete leagueTableEntries={leagueTableEntries} globalLeagueTableEntries={globalLeagueTableEntries} />;
   }
 
   return (
@@ -154,13 +133,13 @@ const DuelMatchScreen = ({ match }) => {
               rightThreshold={50}
               renderLeftActions={renderGoatAction}
               renderRightActions={renderGoatAction}
-              onSwipeableOpen={() => handleSwipeableOpen(currentPair[0].id)}
+              onSwipeableOpen={() => handleSwipeableOpen(currentPair[0].id, currentPair[1].id)}
             >
               <Animated.View style={[styles.videoContainer, { opacity: opacityValue }]}>
                 <Video
                   ref={videoRef1}
                   source={{ uri: currentPair[0].videoUrl }}
-                  rate={1.1}
+                  rate={1.2}
                   isMuted={false}
                   shouldPlay={isFirstVideoPlaying}
                   isLooping={false}
@@ -187,13 +166,13 @@ const DuelMatchScreen = ({ match }) => {
               rightThreshold={50}
               renderLeftActions={renderGoatAction}
               renderRightActions={renderGoatAction}
-              onSwipeableOpen={() => handleSwipeableOpen(currentPair[1].id)}
+              onSwipeableOpen={() => handleSwipeableOpen(currentPair[1].id, currentPair[0].id)}
             >
               <Animated.View style={[styles.videoContainer, { opacity: opacityValue }]}>
                 <Video
                   ref={videoRef2}
                   source={{ uri: currentPair[1].videoUrl }}
-                  rate={1.1}
+                  rate={1.2}
                   isMuted={false}
                   shouldPlay={isSecondVideoPlaying}
                   isLooping={false}
@@ -258,4 +237,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default DuelMatchScreen;
+export default ScrambleMatchScreen;

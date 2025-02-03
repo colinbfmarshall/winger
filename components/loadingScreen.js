@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from 'react';
-import { View, StyleSheet, Animated } from 'react-native';
+import { View, StyleSheet, Animated, Text } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useFonts, RobotoCondensed_700Bold } from '@expo-google-fonts/roboto-condensed';
 
 const LoadingScreen = () => {
   const spinValue = useRef(new Animated.Value(0)).current;
@@ -26,7 +27,10 @@ const LoadingScreen = () => {
   });
 
   return (
-    <View style={styles.SwipeAction}>
+    <View style={styles.screen}>
+      <Text style={[styles.title, { fontFamily: 'RobotoCondensed_700Bold' }]}>
+        swipe to vote
+      </Text>
       <Animated.View style={{ transform: [{ rotate: spin }] }}>
         <MaterialIcons name='goat' size={70} color={'tomato'} style={styles.icon} />
       </Animated.View>
@@ -35,7 +39,7 @@ const LoadingScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  SwipeAction: {
+  screen: {
     flex: 1,
     backgroundColor: 'black',
     justifyContent: 'center',
@@ -43,6 +47,12 @@ const styles = StyleSheet.create({
   },
   icon: {
     // Add any additional styles for the icon here
+  },
+  title: {
+    fontSize: 40,
+    textAlign: 'center',
+    color: '#fdfdfd', // Dark gray text
+    marginBottom: 20,
   },
 });
 

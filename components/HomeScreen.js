@@ -1,13 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useFonts, RobotoCondensed_700Bold } from '@expo-google-fonts/roboto-condensed';
 import { Roboto_400Regular } from '@expo-google-fonts/roboto';
 import * as SplashScreen from 'expo-splash-screen';
 import Header from './Header';
+import ScrambleMatchScreen from './matches/scramble/scrambleMatchScreen';
 
 SplashScreen.preventAutoHideAsync();
 
 const HomeScreen = ({ navigation }) => {
+  const [showScrambleMatch, setShowScrambleMatch] = useState(false);
+
   let [fontsLoaded] = useFonts({
     Roboto_400Regular, RobotoCondensed_700Bold
   });
@@ -22,6 +25,14 @@ const HomeScreen = ({ navigation }) => {
     return null;
   }
 
+  const handlePress = () => {
+    setShowScrambleMatch(true);
+  }
+
+  if (showScrambleMatch) {
+    return <ScrambleMatchScreen />;
+  }
+
   return (
     <View style={[styles.container, styles.screenBackground]}>
       <Header fontSize={60} fontColor="#333333" stopColor="tomato" />
@@ -29,7 +40,7 @@ const HomeScreen = ({ navigation }) => {
         swipe to rate & rank sports moments
       </Text>
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Matches')}>
+        <TouchableOpacity style={styles.button} onPress={handlePress}>
           <Text style={styles.buttonText}>Play</Text>
         </TouchableOpacity>
       </View>

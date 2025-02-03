@@ -4,9 +4,10 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import * as SplashScreen from 'expo-splash-screen';
-import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Header from './components/Header';
-import HomeScreen from './components/HomeScreen'; // Assuming you have a HomeScreen component
+import HomeScreen from './components/HomeScreen';
+import ProfileScreen from './components/ProfileScreen';
 import MatchesScreen from './components/matches/matchesScreen';
 import MatchSessionScreen from './components/matches/matchSessionScreen';
 
@@ -40,16 +41,16 @@ const TabNavigator = ({ navigationRef }) => {
   const getTabBarIcon = (name, focused, color, size) => {
     let iconName;
     switch (name) {
-      case 'Home':
+      case 'home':
         iconName = 'home';
         break;
-      case 'Duel':
+      case 'duel':
         iconName = 'sword-cross';
         break;
-      case 'Rate':
+      case 'rate':
         iconName = 'counter';
         break;
-      case 'Profile':
+      case 'profile':
         iconName = 'skull';
         break;
       default:
@@ -82,22 +83,22 @@ const TabNavigator = ({ navigationRef }) => {
       })}
     >
       <Tab.Screen
-        name="Home"
+        name="home"
         component={withSafeArea(HomeScreen)}
       />
       <Tab.Screen
-        name="Duel"
+        name="duel"
         component={withSafeArea(MatchesScreen)}
         initialParams={{ match_type: 'duel' }} // Pass the 'duel' param
       />
       <Tab.Screen
-        name="Rate"
+        name="rate"
         component={withSafeArea(MatchesScreen)}
         initialParams={{ match_type: 'rate' }} // Pass the 'rate' param
       />
       <Tab.Screen
-        name="Profile"
-        component={withSafeArea(HomeScreen)}
+        name="profile"
+        component={withSafeArea(ProfileScreen)}
       />
     </Tab.Navigator>
   );
