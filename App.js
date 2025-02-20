@@ -1,5 +1,5 @@
-import React from 'react';
-import { SafeAreaView, StatusBar, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, SafeAreaView, StatusBar, StyleSheet, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
@@ -10,6 +10,7 @@ import HomeScreen from './components/HomeScreen';
 import ProfileScreen from './components/ProfileScreen';
 import MatchesScreen from './components/matches/matchesScreen';
 import MatchSessionScreen from './components/matches/matchSessionScreen';
+import LoadingSplashScreen from './components/LoadingSplashScreen';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -115,6 +116,24 @@ const StackNavigator = () => {
 
 const App = () => {
   const navigationRef = React.useRef(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    console.log('App is loading...');
+    // Simulate a loading process
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 4000); // Adjust the timeout duration as needed
+
+    return () => clearTimeout(timer); // Cleanup the timer
+  }, []);
+
+  if (isLoading) {
+    console.log('App is loading2...');
+    return (
+      <LoadingSplashScreen />
+    );
+  }
 
   return (
     <>
