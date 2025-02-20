@@ -123,7 +123,7 @@ const App = () => {
     // Simulate a loading process
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 4000); // Adjust the timeout duration as needed
+    }, 5000); // Adjust the timeout duration as needed
 
     return () => clearTimeout(timer); // Cleanup the timer
   }, []);
