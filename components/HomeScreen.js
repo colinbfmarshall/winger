@@ -33,39 +33,56 @@ const HomeScreen = ({ navigation }) => {
     return <ScrambleMatchScreen />;
   }
 
-  return (
-    <View style={[styles.container, styles.screenBackground]}>
-      <Header fontSize={60} fontColor="#333333" stopColor="tomato" />
-      <Text style={[styles.title, { fontFamily: 'Roboto_400Regular' }]}>
-        swipe to rate & rank sports moments
-      </Text>
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.button} onPress={handlePress}>
-          <Text style={styles.buttonText}>Play</Text>
-        </TouchableOpacity>
+    return (
+      <View style={styles.container}>
+        <View style={styles.section}>
+          <Text style={styles.splashText}>CHOOSE</Text>
+          <Text style={styles.splashText}>YOUR</Text>
+          <Text style={styles.splashText}>SPORT:</Text>
+        </View>
+
+        <View style={styles.section}>
+        </View>
+
+        <View style={styles.section}>
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity style={styles.button} onPress={handlePress}>
+            <Text style={styles.buttonText}>Play</Text>
+          </TouchableOpacity>
+        </View>
+        </View>
       </View>
-    </View>
-  );
+    );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: 'black',
     justifyContent: 'center',
-    alignItems: 'center',
-    padding: 16,
+    alignItems: 'left',
+    paddingHorizontal: 0, // Remove side padding
+    paddingTop: 30, // Add top padding for spacing
+    paddingLeft: 30, // Add left padding for spacing
+    paddingRight: 30, // Add left padding for spacing
   },
-  screenBackground: {
-    backgroundColor: '#fdfdfd', // Slightly lighter gray background
+  section: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'left',
+    width: '100%',
   },
-  title: {
-    fontSize: 19,
-    textAlign: 'center',
-    marginBottom: 40,
-    color: '#333333', // Dark gray text
+  splashText: {
+    color: 'white',
+    fontSize: 64, // Larger font
+    fontWeight: 'bold',
+    fontFamily: 'RobotoCondensed_700Bold_Italic',
+    letterSpacing: 0.5,
+    textAlign: 'left', // Center text
+    lineHeight: 64,
   },
   buttonContainer: {
-    alignItems: 'center',
+    alignItems: 'left',
     width: '100%',
   },
   button: {
@@ -73,12 +90,12 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 5,
     alignItems: 'center',
-    margin: 20,
-    width: '40%',
+    width: '100%',
   },
   buttonText: {
     color: 'white',
-    fontSize: 16,
+    fontFamily: 'RobotoCondensed_700Bold_Italic',
+    fontSize: 24,
     fontWeight: 'bold',
   },
 });

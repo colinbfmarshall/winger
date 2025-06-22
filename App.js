@@ -123,7 +123,7 @@ const App = () => {
     // Simulate a loading process
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 5000); // Adjust the timeout duration as needed
+    }, 4000); // Adjust the timeout duration as needed
 
     return () => clearTimeout(timer); // Cleanup the timer
   }, []);
@@ -148,6 +148,7 @@ const App = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
+    backgroundColor: 'black',
   },
 });
 
