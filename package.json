@@ -12,6 +12,7 @@
     "@expo-google-fonts/roboto": "^0.2.3",
     "@expo-google-fonts/roboto-condensed": "^0.2.3",
     "@expo/vector-icons": "^14.1.0",
+    "@react-native-async-storage/async-storage": "^2.2.0",
     "@react-native-community/slider": "4.5.6",
     "@react-navigation/bottom-tabs": "^6.6.1",
     "@react-navigation/native": "^6.1.18",
@@ -29,6 +30,7 @@
     "react": "19.0.0",
     "react-native": "0.79.4",
     "react-native-gesture-handler": "~2.24.0",
+    "react-native-keychain": "^10.0.0",
     "react-native-reanimated": "~3.17.4",
     "react-native-safe-area-context": "5.4.0",
     "react-native-screens": "~4.11.1"

@@ -1,26 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import { apiService } from '../../../services/apiService';
 import DuelResultsTable from './duelResultsTable';
-
-const API_URL = __DEV__ 
-  ? 'http://localhost:3000'
-  : 'https://gentle-beyond-34147-45b7e7bcdf51.herokuapp.com';
 
 const DuelPreviewScreen = ({ match, startMatchSession }) => {
   const [globalLeagueTableEntries, setGlobalLeagueTableEntries] = useState([]);
 
   useEffect(() => {    
     if (match) {
-      axios.get(`${API_URL}/api/v1/matches/${match.id}`)
-        .then(response => {
+      const fetchGlobalEntries = async () => {
+        const response = await apiService.getMatch(match.id);
+        if (response.success) {
           console.log('response.data.league_table_entries:', response.data.league_table_entries);
           const globalEntries = response.data.league_table_entries;
           setGlobalLeagueTableEntries(globalEntries);
-        })
-        .catch(error => {
-          console.error('There was an error fetching the global league table entries!', error);
-        });
+        } else {
+          console.error('There was an error fetching the global league table entries!', response.error);
+        }
+      };
+
+      fetchGlobalEntries();
     }
   }, [match]);
 

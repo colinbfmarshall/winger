@@ -3,15 +3,11 @@ import { View, Text, StyleSheet, ActivityIndicator, ScrollView, TouchableOpacity
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Video } from 'expo-av';
 import Slider from '@react-native-community/slider';
-import axios from 'axios';
+import { apiService } from '../../../services/apiService';
 import RateResultsTable from './rateResultsTable';
 import RatePreviewScreen from './ratePreviewScreen';
 import LoadingScreen from '../../loadingScreen';
 import ResultsTable from '../resultsTable';
-
-const API_URL = __DEV__ 
-  ? 'http://localhost:3000'
-  : 'https://gentle-beyond-34147-45b7e7bcdf51.herokuapp.com';
 
 const RateMatchScreen = ({ match }) => {
   const [matchSession, setMatchSession] = useState(null);
@@ -33,14 +29,17 @@ const RateMatchScreen = ({ match }) => {
 
   useEffect(() => {
     if (rateComplete) {
-      axios.get(`${API_URL}/api/v1/matches/${match.id}`)
-        .then(response => {
+      const fetchGlobalEntries = async () => {
+        const response = await apiService.getMatch(match.id);
+        if (response.success) {
           const globalEntries = response.data.league_table_entries;
           setGlobalLeagueTableEntries(globalEntries);
-        })
-        .catch(error => {
-          console.error('There was an error fetching the global league table entries!', error);
-        });
+        } else {
+          console.error('There was an error fetching the global league table entries!', response.error);
+        }
+      };
+
+      fetchGlobalEntries();
     }
   }, [rateComplete, match]);
 
@@ -52,22 +51,10 @@ const RateMatchScreen = ({ match }) => {
     showLoadingScreen();
 
     try {
-      const response = await fetch(`${API_URL}/api/v1/matches/${match.id}/match_sessions/${matchSession.id}/submit_rate`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          // 'Authorization': `Bearer ${authToken}`,
-        },
-        body: JSON.stringify({
-          moment_id: currentMoment.id,
-          skill: skill,
-          swagger: swagger
-        })
-      });
+      const response = await apiService.submitRate(match.id, matchSession.id, currentMoment.id, skill, swagger);
 
-      const data = await response.json();
-
-      if (response.ok) {
+      if (response.success) {
+        const data = response.data;
         setRatingSubmitted(true); // Set the flag to true after submission
         setTimeout(() => setRatingSubmitted(false), 5000); // Reset the flag after 5 seconds
 
@@ -78,7 +65,7 @@ const RateMatchScreen = ({ match }) => {
           setCurrentMoment(data.next_moment); // Load the next moment to rate
         }
       } else {
-        console.error('Failed to submit rating:', data.error);
+        console.error('Failed to submit rating:', response.error);
       }
     } catch (error) {
       console.error('Error submitting rating:', error);
@@ -86,17 +73,20 @@ const RateMatchScreen = ({ match }) => {
   };
 
   const startMatchSession = () => {
-    axios.post(`${API_URL}/api/v1/matches/${match.id}/match_sessions`)
-    .then(response => {
-      const matchSession = response.data.match_session;
-      setMatchSession(matchSession);
-      setCurrentMoment(matchSession.remaining_moments[0]); // First moment to rate
-      setIsPreviewScreen(false);
-      showLoadingScreen();
-    })
-    .catch(error => {
-      console.error('There was an error fetching the match details!', error);
-    });
+    const createSession = async () => {
+      const response = await apiService.createMatchSession(match.id);
+      if (response.success) {
+        const matchSession = response.data.match_session;
+        setMatchSession(matchSession);
+        setCurrentMoment(matchSession.remaining_moments[0]); // First moment to rate
+        setIsPreviewScreen(false);
+        showLoadingScreen();
+      } else {
+        console.error('There was an error creating the match session!', response.error);
+      }
+    };
+
+    createSession();
   };
 
   const showLoadingScreen = () => {

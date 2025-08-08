@@ -1,24 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
-import axios from 'axios';
-
-const API_URL = __DEV__ 
-  ? 'http://localhost:3000'
-  : 'https://gentle-beyond-34147-45b7e7bcdf51.herokuapp.com';
+import { apiService } from '../../services/apiService';
 
 const MatchSessionScreen = ({  match }) => {
   const [matchSession, setMatchSession] = useState(null);
 
   useEffect(() => {
     if (match) {
-      axios.post(`${API_URL}/api/v1/matches/${match.id}/match_sessions`)
-        .then(response => {
+      const createSession = async () => {
+        const response = await apiService.createMatchSession(match.id);
+        if (response.success) {
           const session = response.data.match_session;
           setMatchSession(session);
-        })
-        .catch(error => {
-          console.error('There was an error fetching the match details!', error);
-        });
+        } else {
+          console.error('There was an error creating the match session!', response.error);
+        }
+      };
+
+      createSession();
     }
   }, [match]);
 
