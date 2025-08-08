@@ -5,6 +5,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import * as SplashScreen from 'expo-splash-screen';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Header from './components/Header';
 import HomeScreen from './components/HomeScreen';
 import ProfileScreen from './components/ProfileScreen';
@@ -114,31 +115,38 @@ const StackNavigator = () => {
   );
 };
 
-const App = () => {
-  const navigationRef = React.useRef(null);
-  const [isLoading, setIsLoading] = useState(true);
+const AppNavigator = () => {
+  const { isAuthenticated, isLoading } = useAuth();
+  const [appIsLoading, setAppIsLoading] = useState(true);
 
   useEffect(() => {
     console.log('App is loading...');
     // Simulate a loading process
     const timer = setTimeout(() => {
-      setIsLoading(false);
+      setAppIsLoading(false);
     }, 4000); // Adjust the timeout duration as needed
 
     return () => clearTimeout(timer); // Cleanup the timer
   }, []);
 
-  if (isLoading) {
+  if (appIsLoading) {
     console.log('App is loading2...');
+    return <LoadingSplashScreen />;
+  }
+
+  if (isLoading) {
     return (
-      <LoadingSplashScreen />
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="tomato" />
+      </View>
     );
   }
 
   return (
     <>
       <StatusBar barStyle="light-content" backgroundColor="tomato" />
-      <NavigationContainer ref={navigationRef}>
+      <NavigationContainer>
+        {/* Always show main app since users are auto-authenticated anonymously */}
         <StackNavigator />
       </NavigationContainer>
     </>
@@ -150,6 +158,20 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'black',
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'black',
+  },
 });
+
+const App = () => {
+  return (
+    <AuthProvider>
+      <AppNavigator />
+    </AuthProvider>
+  );
+};
 
 export default App;

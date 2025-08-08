@@ -1,14 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
-import axios from 'axios';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { apiService } from '../../services/apiService';
 
 import DuelMatchScreen from './duel/duelMatchScreen';
 import RateMatchScreen from './rate/rateMatchScreen';
-
-const API_URL = __DEV__ 
-? 'http://localhost:3000'
-: 'https://gentle-beyond-34147-45b7e7bcdf51.herokuapp.com';
 
 const MatchesScreen = ({ route }) => {
   const { match_type } = route.params;
@@ -18,14 +14,17 @@ const MatchesScreen = ({ route }) => {
 
   useEffect(() => {
     // Fetch matches from your API
-    axios.get(`${API_URL}/api/v1/matches`, { params: { match_type } })
-      .then(response => {
+    const fetchMatches = async () => {
+      const response = await apiService.getMatches(match_type);
+      if (response.success) {
         console.log('Matches fetched successfully!', response.data);
         setMatches(response.data);
-      })
-      .catch(error => {
-        console.error('There was an error fetching the matches!', error);
-      });
+      } else {
+        console.error('There was an error fetching the matches!', response.error);
+      }
+    };
+
+    fetchMatches();
   }, [match_type]);
 
   const handleSelectMatch = (match) => {

@@ -4,15 +4,13 @@ import { Video } from 'expo-av';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import * as Haptics from 'expo-haptics';
-import axios from 'axios';
+import { apiService } from '../../../services/apiService';
+import { useAuth } from '../../../contexts/AuthContext';
 import LoadingScreen from '../../loadingScreen';
-
-const API_URL = __DEV__ 
-  ? 'http://localhost:3000'
-  : 'https://gentle-beyond-34147-45b7e7bcdf51.herokuapp.com';
 
 const ScrambleMatchScreen = () => {
   console.log('ScrambleMatchScreen');
+  const { isAuthenticated, isLoading: authLoading, user } = useAuth();
   const [MatchId, setMatchId] = useState(null);
   const [matchSession, setMatchSession] = useState(null);
   const [currentPair, setCurrentPair] = useState([]);
@@ -34,20 +32,10 @@ const ScrambleMatchScreen = () => {
     console.log('submitWinner', winnerMomentId);
     showLoadingScreen();
     try {
-      const response = await fetch(`${API_URL}/api/v1/matches/${MatchId}/match_sessions/${matchSession.id}/submit_scramble`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          // 'Authorization': `Bearer ${authToken}`,
-        },
-        body: JSON.stringify({
-          winner_id: winnerMomentId,
-        })
-      });
+      const response = await apiService.submitScramble(MatchId, matchSession.id, winnerMomentId);
   
-      const data = await response.json();
-  
-      if (response.ok) {
+      if (response.success) {
+        const data = response.data;
         if (data.completed) {
           setMatchSession({ ...matchSession, completed: true }); // Mark scramble as complete
           setLeagueTableEntries(data.league_table_entries); // Set league table entries
@@ -60,7 +48,7 @@ const ScrambleMatchScreen = () => {
           showLoadingScreen();
         }
       } else {
-        console.error('Failed to submit scramble:', data.error);
+        console.error('Failed to submit scramble:', response.error);
       }
     } catch (error) {
       console.error('Error submitting scramble:', error);
@@ -68,18 +56,30 @@ const ScrambleMatchScreen = () => {
   };
 
   const startMatchSession = () => {
-    axios.post(`${API_URL}/api/v1/matches/create_scramble_match`)
-    .then(response => {
-      const matchSession = response.data.match_session;
-      console.log('Match session:', matchSession);
-      setMatchId(matchSession.match_id);
-      setMatchSession(matchSession);
-      setCurrentPair([matchSession.remaining_moments[0][0], matchSession.remaining_moments[0][1]]); // First scramble pair
-      setIsLoading(false);
-    })
-    .catch(error => {
-      console.error('There was an error fetching the match details!', error);
-    });
+    const createScrambleMatch = async () => {
+      // Check authentication before making API call
+      if (!isAuthenticated) {
+        console.error('User not authenticated, cannot create scramble match');
+        setIsLoading(false);
+        return;
+      }
+      
+      console.log('User authenticated, creating scramble match for user:', user?.id);
+      const response = await apiService.createScrambleMatch();
+      if (response.success) {
+        const matchSession = response.data.match_session;
+        console.log('Match session:', matchSession);
+        setMatchId(matchSession.match_id);
+        setMatchSession(matchSession);
+        setCurrentPair([matchSession.remaining_moments[0][0], matchSession.remaining_moments[0][1]]); // First scramble pair
+        setIsLoading(false);
+      } else {
+        console.error('There was an error creating the scramble match!', response.error);
+        setIsLoading(false);
+      }
+    };
+
+    createScrambleMatch();
   };
 
   const showLoadingScreen = () => {
@@ -113,6 +113,20 @@ const ScrambleMatchScreen = () => {
       submitWinner(winnerMomentId);
     });
   };
+
+  // Show loading screen while authentication is loading
+  if (authLoading) {
+    return <LoadingScreen />;
+  }
+
+  // Show error message if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.errorText}>Authentication required</Text>
+      </View>
+    );
+  }
 
   if (isLoading) {
     return <LoadingScreen />;
@@ -234,6 +248,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 15,
     color: 'white',
+  },
+  errorText: {
+    color: 'white',
+    fontSize: 18,
+    textAlign: 'center',
+    marginTop: 50,
   },
 });
 
