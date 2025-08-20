@@ -2,6 +2,14 @@
 
 This document outlines the anonymous user authentication system implemented in the Winger React Native app.
 
+## Recent Updates
+
+### Video Performance Optimization (August 2025)
+- **Updated to expo-video**: Migrated from deprecated `expo-av` to modern `expo-video` API
+- **iOS Performance**: Using `replaceAsync()` instead of `replace()` to prevent main thread blocking
+- **Better UX**: Asynchronous video loading eliminates UI freezes during video transitions
+- **Future-Proof**: Latest Expo video implementation with improved performance
+
 ## Overview
 
 The app now uses anonymous user accounts with JWT authentication to provide frictionless onboarding while maintaining user identity for gameplay data. Users are automatically authenticated without requiring email/password registration.

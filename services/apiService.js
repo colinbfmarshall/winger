@@ -209,7 +209,7 @@ export const apiService = {
   async submitScramble(matchId, sessionId, winnerId) {
     try {
       const response = await apiClient.post(
-        `/api/v1/matches/${matchId}/match_sessions/${sessionId}/submit_scramble`,
+        `api/v1/scramble/${sessionId}/duels`,
         { winner_id: winnerId }
       );
       return { success: true, data: response.data };
@@ -232,7 +232,7 @@ export const apiService = {
         console.log('Token is expired:', authService.isTokenExpired(token));
       }
       
-      const response = await apiClient.post('/api/v1/matches/create_scramble_match');
+      const response = await apiClient.post('/api/v1/scramble');
       console.log('Scramble match created successfully');
       return { success: true, data: response.data };
     } catch (error) {
