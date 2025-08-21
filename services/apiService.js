@@ -206,11 +206,15 @@ export const apiService = {
     }
   },
 
-  async submitScramble(matchId, sessionId, winnerId) {
+  async submitScramble(sessionId, winnerId, roundIndex) {
     try {
       const response = await apiClient.post(
-        `api/v1/scramble/${sessionId}/duels`,
-        { winner_id: winnerId }
+        `api/v1/scramble/${sessionId}/submit_duel`,
+        { 
+          session_id: sessionId, 
+          winner_id: winnerId, 
+          round_index: roundIndex 
+        }
       );
       return { success: true, data: response.data };
     } catch (error) {

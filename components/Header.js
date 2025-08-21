@@ -1,23 +1,25 @@
 import React from 'react';
-import { Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const Header = ({ fontSize, fontColor, stopColor, onPress }) => {
+const Header = () => {
+  const insets = useSafeAreaInsets();
+  
   return (
-    <TouchableOpacity onPress={onPress}>
-      <Text style={[styles.header, { fontFamily: 'RobotoCondensed_700Bold_Italic', fontSize, color: fontColor }]}>
-        G<Text style={[styles.stop, { color: stopColor }]}>.</Text>O<Text style={[styles.stop, { color: stopColor }]}>.</Text>A<Text style={[styles.stop, { color: stopColor }]}>.</Text>T<Text style={[styles.stop, { color: stopColor }]}></Text>
-      </Text>
-    </TouchableOpacity>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      <View style={styles.line} />
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  header: {
-    fontWeight: 'bold',
+  container: {
+    backgroundColor: 'black',
   },
-  stop: {
-    // Default color if stopColor prop is not provided
-    color: '#333333',
+  line: {
+    height: 2,
+    backgroundColor: 'tomato',
+    width: '100%',
   },
 });
 
