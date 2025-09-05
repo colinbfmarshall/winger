@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated, Dimensions, ScrollView } from 'react-native';
-import { GestureHandlerRootView, PanGestureHandler } from 'react-native-gesture-handler';
+import { View, Text, TouchableOpacity, StyleSheet, Animated, Dimensions } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { useFonts, RobotoCondensed_700Bold_Italic } from '@expo-google-fonts/roboto-condensed';
 import { Roboto_400Regular } from '@expo-google-fonts/roboto';
 import { MaterialIcons } from '@expo/vector-icons';
 import VideoPreloader from './VideoPreloader';
+import Colors from '../../../config/colors';
 
 const BaseballCard = ({ 
   winnerCard, 
@@ -18,13 +19,10 @@ const BaseballCard = ({
     RobotoCondensed_700Bold_Italic,
   });
 
-  const [currentTab, setCurrentTab] = useState(0); // 0 = Basic Info, 1 = Performance Stats
   const [nextVideosReady, setNextVideosReady] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
-  const tabTranslateX = useRef(new Animated.Value(0)).current;
   const screenWidth = Dimensions.get('window').width;
-  const panGesture = useRef(null);
 
   // Handle when next videos are ready for preloading
   const handleNextVideoReady = () => {
@@ -76,54 +74,16 @@ const BaseballCard = ({
   }
 
   // Calculate derived values
-  const eloChange = (winnerCard.elo_after || 0) - (winnerCard.elo_before || 0);
+  const eloChange = Math.round(winnerCard.elo_after || 0) - Math.round(winnerCard.elo_before || 0);
   const rankChange = (winnerCard.rank_before || 0) - (winnerCard.rank_after || 0); // Positive means improved rank
-  const percentileBefore = winnerCard.total_moments_in_category ? 
-    Math.round(((winnerCard.total_moments_in_category - (winnerCard.rank_before || 0) + 1) / winnerCard.total_moments_in_category) * 100) : 0;
-  const percentileAfter = winnerCard.total_moments_in_category ? 
-    Math.round(((winnerCard.total_moments_in_category - (winnerCard.rank_after || 0) + 1) / winnerCard.total_moments_in_category) * 100) : 0;
-
-  const switchTab = (tabIndex) => {
-    setCurrentTab(tabIndex);
-    Animated.timing(tabTranslateX, {
-      toValue: tabIndex * -(screenWidth - 60), // Account for 30px padding on each side
-      duration: 300,
-      useNativeDriver: true,
-    }).start();
-  };
-
-  const onPanGestureEvent = Animated.event(
-    [{ nativeEvent: { translationX: tabTranslateX } }],
-    { 
-      useNativeDriver: true,
-      listener: (event) => {
-        // Update translateX based on current tab position and gesture
-        const basePosition = currentTab * -(screenWidth - 60); // Account for padding
-        const newPosition = basePosition + event.nativeEvent.translationX;
-        tabTranslateX.setValue(newPosition);
-      }
-    }
-  );
-
-  const onPanHandlerStateChange = (event) => {
-    if (event.nativeEvent.state === 5) { // ENDED
-      const { translationX, velocityX } = event.nativeEvent;
-      const threshold = screenWidth * 0.3; // 30% of screen width
-      
-      let newTab = currentTab;
-      
-      // Determine new tab based on swipe distance or velocity
-      if (translationX < -threshold || velocityX < -500) {
-        // Swipe left - go to next tab (Performance)
-        newTab = Math.min(1, currentTab + 1);
-      } else if (translationX > threshold || velocityX > 500) {
-        // Swipe right - go to previous tab (Basic Info)
-        newTab = Math.max(0, currentTab - 1);
-      }
-      
-      // Animate to the final position
-      switchTab(newTab);
-    }
+  const totalMoments = winnerCard.total_moments_in_category || 1;
+  const currentRank = winnerCard.rank_after || winnerCard.rank_before || 0;
+  
+  // Format tier display
+  const getTierDisplay = () => {
+    if (winnerCard.tier_after) return winnerCard.tier_after;
+    if (winnerCard.tier_before) return winnerCard.tier_before;
+    return 'N/A';
   };
 
   const renderStatRow = (label, value, isPositive = null) => (
@@ -135,18 +95,6 @@ const BaseballCard = ({
         isPositive === false && styles.negativeValue
       ]}>
         {value}
-      </Text>
-    </View>
-  );
-
-  const renderStatRowWithColoredChange = (label, beforeValue, afterValue, changeValue, isPositive = null) => (
-    <View style={styles.statRow}>
-      <Text style={styles.statLabel}>{label}</Text>
-      <Text style={styles.statValue}>
-        {beforeValue} → {afterValue} <Text style={[
-          isPositive === true && styles.positiveValue,
-          isPositive === false && styles.negativeValue
-        ]}>({changeValue >= 0 ? '+' : ''}{changeValue})</Text>
       </Text>
     </View>
   );
@@ -179,86 +127,82 @@ const BaseballCard = ({
 
       {/* Content Section - Middle */}
       <View style={styles.contentSection}>
-        {/* Tab Selector - Fixed at top */}
-        <View style={styles.tabSelector}>
-          <TouchableOpacity 
-            style={[styles.tab, currentTab === 0 && styles.activeTab]}
-            onPress={() => switchTab(0)}
-          >
-            <Text style={[styles.tabText, currentTab === 0 && styles.activeTabText]}>
-              BASIC INFO
+          
+          {/* Top Stats Row: Rating, Rank, Tier */}
+          <View style={styles.topStatsRow}>
+            <Text style={[styles.topStatText, styles.underlinedText]}>
+              Rank: {currentRank}/{totalMoments}
             </Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={[styles.tab, currentTab === 1 && styles.activeTab]}
-            onPress={() => switchTab(1)}
-          >
-            <Text style={[styles.tabText, currentTab === 1 && styles.activeTabText]}>
-              PERFORMANCE
+            <Text style={[styles.topStatText, styles.underlinedText]}>
+              Rating: {Math.round(winnerCard.elo_after || 0)}{' '}
+              <Text style={[styles.topStatChange, eloChange > 0 ? styles.positiveValue : styles.negativeValue]}>
+                ({eloChange >= 0 ? '+' : ''}{eloChange})
+              </Text>
             </Text>
-          </TouchableOpacity>
-        </View>
+          </View>
 
-        <ScrollView style={styles.scrollableContent} showsVerticalScrollIndicator={false}>
+          <View style={styles.titleSection}>
+            {/* <Text style={styles.momentTitle}>{winnerCard.title}</Text> */}
+          </View>
 
-        {/* Carousel Container */}
-        <PanGestureHandler
-          ref={panGesture}
-          onGestureEvent={onPanGestureEvent}
-          onHandlerStateChange={onPanHandlerStateChange}
-          activeOffsetX={[-10, 10]}
-          failOffsetY={[-5, 5]}
-        >
-          <Animated.View style={styles.carouselContainer}>
-            <Animated.View 
-              style={[
-                styles.carouselContent,
-                { transform: [{ translateX: tabTranslateX }] }
-              ]}
-            >
-              {/* Basic Info Tab */}
-              <View style={styles.tabContent}>
-                {/* Video Summary */}
-                        {winnerCard.summary && (
-                          <View style={styles.summarySection}>
-                          <Text style={styles.summaryText}>{winnerCard.summary}</Text>
-                          </View>
-                        )}
-                        
-                        <View style={styles.infoSection}>
-                          {winnerCard.player && renderStatRow('PLAYER', winnerCard.player)}
-                          {winnerCard.team && renderStatRow('TEAM', winnerCard.team)}
-                          {winnerCard.competition && renderStatRow('COMPETITION', winnerCard.competition)}
-                          {winnerCard.opponent && renderStatRow('OPPONENT', winnerCard.opponent)}
-                          {winnerCard.sport && renderStatRow('SPORT', winnerCard.sport.charAt(0).toUpperCase() + winnerCard.sport.slice(1))}
-                        </View>
-                        </View>
+          {/* Video Summary */}
+          {winnerCard.summary && (
+            <View style={styles.summarySection}>
+              <Text style={styles.summaryText}>"{winnerCard.summary}"</Text>
+            </View>
+          )}
 
-                        {/* Performance Stats Tab */}
-              <View style={styles.tabContent}>
-                <View style={styles.infoSection}>
-                  {/* Global Stats */}
-                  {renderStatRow('Global Win Rate', `${Math.round((winnerCard.global_win_rate || 0) * 100)}%`)}
-                  {winnerCard.total_duels && renderStatRow('Total Duels', winnerCard.total_duels)}
-                  {/* ELO */}
-                  {renderStatRowWithColoredChange('Rating', winnerCard.elo_before || 0, winnerCard.elo_after || 0, eloChange, eloChange > 0)}
-                  
-                  {/* Rank */}
-                  {renderStatRowWithColoredChange('Rank', `#${winnerCard.rank_before || 0}`, `#${winnerCard.rank_after || 0}`, rankChange, rankChange > 0)}
-                  
-                  {/* Tier & Percentile */}
-                  {(winnerCard.tier_before || winnerCard.tier_after) && renderStatRow('Tier', `${winnerCard.tier_before || 'N/A'} → ${winnerCard.tier_after || 'N/A'}`)}
-                  {renderStatRow('Percentile', `${percentileBefore}% → ${percentileAfter}%`)}
-                  
-                  {/* Head-to-Head vs Opponent */}
-                  {loserCard && renderStatRow('Head 2 Head Record', `${winnerCard.wins_vs_opponent || 0}/${winnerCard.total_matchups_vs_opponent || 1}`)}
-                  {loserCard && renderStatRow('Head 2 Head Win Rate', `${Math.round(((winnerCard.wins_vs_opponent || 0) / (winnerCard.total_matchups_vs_opponent || 1)) * 100)}%`)}
+          {/* Basic Info Section */}
+          <View style={styles.infoSection}>
+            {renderStatRow('Win Rate', `${Math.round((winnerCard.global_win_rate || 0) * 100)}%`)}
+            {winnerCard.player && renderStatRow('Player', winnerCard.player)}
+            {winnerCard.team && renderStatRow('Match', `${winnerCard.team} vs ${winnerCard.opposition}`)}
+            {winnerCard.competition && renderStatRow('Competition', `${winnerCard.competition}  2015/16`)}
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Head-to-Head</Text>
+              <Text style={styles.statValue}>
+                {winnerCard.wins_vs_opponent || 0}{(winnerCard.total_matchups_vs_opponent || 1) - (winnerCard.wins_vs_opponent || 0)} vs Loser
+              </Text>
+            </View>
+
+          </View>
+
+          {/* Loser Section */}
+          {loserCard && (
+            <View style={styles.loserSection}>
+              <View style={styles.loserContainer}>
+                <View style={styles.loserTitle}>
+                  <Text style={styles.loserText}>LOSER</Text>
+                </View>
+                <View style={styles.loserDetailsSection}>
+                  {loserCard.player && (
+                    <View style={styles.loserStatRow}>
+                      <Text style={styles.loserStatLabel}>Player</Text>
+                      <Text style={styles.loserStatValue}>{loserCard.player}</Text>
+                    </View>
+                  )}
+                  {loserCard.opposition && (
+                    <View style={styles.loserStatRow}>
+                      <Text style={styles.loserStatLabel}>Match</Text>
+                      <Text style={styles.loserStatValue}>{loserCard.team} vs {loserCard.opposition}</Text>
+                    </View>
+                  )}
+                  <View style={styles.loserStatRow}>
+                    <Text style={styles.loserStatLabel}>Rank</Text>
+                    <Text style={styles.loserStatValue}>
+                      {loserCard.rank_after || loserCard.rank_before || 0}/{loserCard.total_moments_in_category || 1}
+                    </Text>
+                  </View>
+                  <View style={styles.loserStatRow}>
+                    <Text style={styles.loserStatLabel}>Rating</Text>
+                    <Text style={styles.loserStatValue}>
+                      {Math.round(loserCard.elo_after || loserCard.elo_before || 0)}
+                    </Text>
+                  </View>
                 </View>
               </View>
-            </Animated.View>
-          </Animated.View>
-        </PanGestureHandler>
-        </ScrollView>
+            </View>
+          )}
       </View>
 
       {/* Button Section - Bottom */}
@@ -316,7 +260,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 20,
     left: 20,
-    backgroundColor: 'rgba(255, 99, 71, 0.9)',
+    backgroundColor: Colors.primary,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 6,
@@ -327,85 +271,123 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontFamily: 'RobotoCondensed_700Bold_Italic',
   },
-  contentSection: {
-    flex: 6, // 6 parts out of 12
+  titleSection: {
     paddingHorizontal: 30,
-    paddingVertical: 20,
-  },
-  scrollableContent: {
-    flex: 1,
+    paddingVertical: 5,
+    backgroundColor: 'black',
   },
   momentTitle: {
-    fontSize: 24,
+    fontSize: 16,
     fontWeight: 'bold',
     color: 'white',
     fontFamily: 'RobotoCondensed_700Bold_Italic',
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  contentSection: {
+    flex: 7, // 6 parts out of 12
+    paddingHorizontal: 30,
+    paddingVertical: 20,
+  },
+  topStatsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+    paddingHorizontal: 5,
+  },
+  topStatText: {
+    fontSize: 20,
+    color: 'white',
+    fontFamily: 'RobotoCondensed_700Bold_Italic',
+    fontWeight: 'bold',
+    flex: 1,
+    textAlign: 'center',
+  },
+  underlinedText: {
+    textDecorationLine: 'underline',
+    textDecorationColor: Colors.primary,
+    textDecorationStyle: 'solid',
+  },
+  topStatChange: {
+    fontSize: 14,
+    fontFamily: 'RobotoCondensed_700Bold_Italic',
+  },
+  summarySection: {
+    marginBottom: 10,
+    paddingBottom: 15,
+  },
+  summaryText: {
+    fontSize: 14,
+    color: '#ccc',
+    fontFamily: 'RobotoCondensed_700Bold_Italic',
+    lineHeight: 22,
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
+  separator: {
+    height: 1,
+    backgroundColor: '#333',
+    marginVertical: 15,
+    marginHorizontal: 20,
+  },
+  performanceSection: {
     marginBottom: 20,
-    lineHeight: 28,
   },
   infoSection: {
     marginBottom: 24,
   },
-  summarySection: {
+  loserSection: {
     marginBottom: 20,
-    paddingBottom: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#333',
   },
-  summaryText: {
-    fontSize: 16,
-    color: 'white',
-    fontFamily: 'RobotoCondensed_700Bold_Italic',
-    lineHeight: 22,
-    textAlign: 'left',
-  },
-  sectionHeader: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: 'white',
-    fontFamily: 'RobotoCondensed_700Bold_Italic',
-    marginBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#333',
-    paddingBottom: 4,
-  },
-  tabSelector: {
+  loserContainer: {
     flexDirection: 'row',
-    marginBottom: 20,
-    backgroundColor: '#111',
-    borderRadius: 8,
-    padding: 4,
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 6,
     alignItems: 'center',
   },
-  activeTab: {
-    backgroundColor: 'tomato',
-  },
-  tabText: {
-    fontSize: 14,
-    color: '#999',
-    fontFamily: 'RobotoCondensed_700Bold_Italic',
-    fontWeight: 'bold',
-  },
-  activeTabText: {
-    color: 'white',
-  },
-  carouselContainer: {
-    overflow: 'hidden',
+  loserTitle: {
+    backgroundColor: '#bbb',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
     flex: 1,
   },
-  carouselContent: {
-    flexDirection: 'row',
-    width: '200%', // Two tabs side by side
+  loserText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+    fontFamily: 'RobotoCondensed_700Bold_Italic',
+    textAlign: 'center',
   },
-  tabContent: {
-    width: '50%', // Each tab takes half of the carousel content width
-    paddingHorizontal: 0, // Remove padding to prevent offset
+  loserDetailsSection: {
+    flex: 2,
+    marginLeft: 10,
+  },
+  loserStatRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: '#222',
+  },
+  loserStatLabel: {
+    fontSize: 12,
+    color: '#999',
+    fontFamily: 'Roboto_400Regular',
+    flex: 1,
+  },
+  loserStatValue: {
+    fontSize: 12,
+    color: 'white',
+    fontFamily: 'RobotoCondensed_700Bold_Italic',
+    fontWeight: 'bold',
+    textAlign: 'right',
+  },
+  loserStatText: {
+    color: 'white',
+    fontSize: 12,
+    fontFamily: 'Roboto_400Regular',
+    marginRight: 15,
   },
   statRow: {
     flexDirection: 'row',
@@ -432,7 +414,7 @@ const styles = StyleSheet.create({
     color: '#4CAF50',
   },
   negativeValue: {
-    color: '#FF5722',
+    color: Colors.primary,
   },
   statGroup: {
     marginBottom: 16,
@@ -442,21 +424,21 @@ const styles = StyleSheet.create({
   },
   statGroupTitle: {
     fontSize: 14,
-    color: 'tomato',
+    color: Colors.primary,
     fontFamily: 'RobotoCondensed_700Bold_Italic',
     fontWeight: 'bold',
     marginBottom: 8,
     textTransform: 'uppercase',
   },
   buttonSection: {
-    flex: 2, // 2 parts out of 12  
+    flex: 1, // 2 parts out of 12  
     paddingHorizontal: 30,
     paddingBottom: 30,
     paddingTop: 10,
     justifyContent: 'center',
   },
   playButton: {
-    backgroundColor: 'tomato',
+    backgroundColor: Colors.primary,
     padding: 10,
     borderRadius: 5,
     alignItems: 'center',

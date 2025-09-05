@@ -14,13 +14,15 @@ export const ACTIONS = {
   PRELOAD_NEXT_READY: 'PRELOAD_NEXT_READY',
   NEXT_ROUND: 'NEXT_ROUND',
   COMPLETE: 'COMPLETE',
-  SET_LOADING: 'SET_LOADING'
+  SET_LOADING: 'SET_LOADING',
+  PLAY_AGAIN: 'PLAY_AGAIN'
 };
 
 export const initialState = {
   phase: PHASES.INSTRUCTIONS,
   roundIndex: 0,
   sessionId: null,
+  sport: null,
   duels: [],
   currentPair: [],
   preloadedNextPairReady: false,
@@ -35,6 +37,7 @@ export function reducer(state, action) {
       return {
         ...state,
         sessionId: action.payload.sessionId,
+        sport: action.payload.sport,
         duels: action.payload.duels,
         currentPair: action.payload.duels.length > 0 ? [action.payload.duels[0].moment1, action.payload.duels[0].moment2] : [],
         loading: false
@@ -103,6 +106,12 @@ export function reducer(state, action) {
       return {
         ...state,
         loading: action.payload
+      };
+
+    case ACTIONS.PLAY_AGAIN:
+      return {
+        ...initialState,
+        loading: true
       };
 
     default:

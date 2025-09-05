@@ -198,11 +198,11 @@ const DuelVideoPair = ({
 
   // Trigger bottom video preloading when top video starts playing
   useEffect(() => {
-    if (isFirstVideoPlaying && !shouldPreloadBottom) {
+    if (isFirstVideoPlaying && !shouldPreloadBottom && bottomMoment) {
       console.log('Top video started playing, triggering bottom video preload');
       setShouldPreloadBottom(true);
     }
-  }, [isFirstVideoPlaying, shouldPreloadBottom]);
+  }, [isFirstVideoPlaying, shouldPreloadBottom, bottomMoment?.id]);
 
   const renderSwipeAction = () => {
     return <View style={styles.swipeAction} />;
@@ -280,9 +280,9 @@ const DuelVideoPair = ({
       </View>
       
       {/* Preload bottom video while top video is playing */}
-      {shouldPreloadBottom && bottomMoment && (
+      {shouldPreloadBottom && bottomMoment && !isSecondVideoLoaded && (
         <BottomVideoPreloader
-          key={`bottom-preload-${bottomMoment.id}`}
+          key={`bottom-preload-${bottomMoment.id}-${shouldPreloadBottom}`}
           bottomMoment={bottomMoment}
           onVideoReady={handleBottomVideoReady}
         />

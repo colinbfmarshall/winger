@@ -1,4 +1,4 @@
-import React, { useReducer, useEffect, useCallback } from 'react';
+import React, { useReducer, useEffect, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { apiService } from '../../../services/apiService';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -7,10 +7,11 @@ import PlayInstructions from './PlayInstructions';
 import DuelVideoPair from './DuelVideoPair';
 import BaseballCard from './BaseballCard';
 import VideoPreloader from './VideoPreloader';
+import LeaderboardComplete from './LeaderboardComplete';
 import { EloCalculator } from '../../../utils/EloCalculator';
 
-const ScrambleMatchScreen = () => {
-  console.log('ScrambleMatchScreen');
+const ScrambleMatchScreen = ({ sport, onBackToHome }) => {
+  console.log('ScrambleMatchScreen with sport:', sport);
   const { isAuthenticated, isLoading: authLoading, user } = useAuth();
   const [state, dispatch] = useReducer(reducer, initialState);
 
@@ -23,8 +24,8 @@ const ScrambleMatchScreen = () => {
       }
 
       try {
-        console.log('User authenticated, creating scramble match for user:', user?.id);
-        const response = await apiService.createScrambleMatch();
+        console.log('User authenticated, creating scramble match for user:', user?.id, 'with sport:', sport);
+        const response = await apiService.createScrambleMatch(sport);
         console.log('Response from createScrambleMatch:', response);
         
         if (response.success) {
@@ -36,6 +37,7 @@ const ScrambleMatchScreen = () => {
             type: ACTIONS.INIT_SESSION, 
             payload: { 
               sessionId: session_id, 
+              sport: sport,
               duels: duels 
             } 
           });
@@ -58,10 +60,10 @@ const ScrambleMatchScreen = () => {
 
   const handleSwipeWinner = useCallback(async (winnerMoment, loserMoment) => {
     console.log('Winner selected:', winnerMoment.id);
-    
+    console.log('state index:', state.roundIndex);
     // Calculate estimated ELO changes using EloCalculator
-    const winnerEloBefore = winnerMoment.elo_before || winnerMoment.elo_rating || 1200;
-    const loserEloBefore = loserMoment.elo_before || loserMoment.elo_rating || 1200;
+    const winnerEloBefore = Math.round(winnerMoment.elo_before || winnerMoment.elo_rating || 1200);
+    const loserEloBefore = Math.round(loserMoment.elo_before || loserMoment.elo_rating || 1200);
     
     const winnerEloAfter = EloCalculator.estimateEloAfter(winnerEloBefore, loserEloBefore, true);
     const loserEloAfter = EloCalculator.estimateEloAfter(loserEloBefore, winnerEloBefore, false);
@@ -94,11 +96,19 @@ const ScrambleMatchScreen = () => {
     } catch (error) {
       console.error('Error submitting scramble:', error);
     }
-  }, [state.sessionId]);
+  }, [state.sessionId, state.roundIndex]);
 
   const handleNextRound = useCallback(() => {
     dispatch({ type: ACTIONS.NEXT_ROUND });
   }, []);
+
+  const handlePlayAgain = useCallback(() => {
+    if (onBackToHome) {
+      onBackToHome();
+    } else {
+      dispatch({ type: ACTIONS.PLAY_AGAIN });
+    }
+  }, [onBackToHome]);
 
   const handleFirstVideoReady = useCallback(() => {
     dispatch({ type: ACTIONS.FIRST_VIDEO_READY });
@@ -125,6 +135,12 @@ const ScrambleMatchScreen = () => {
       handleSwipeWinner(state.currentPair[1], state.currentPair[0]);
     }
   }, [state.currentPair, handleSwipeWinner]);
+
+  // Memoize next round data to prevent unnecessary re-renders
+  const nextRoundData = useMemo(() => {
+    const nextRoundIndex = state.roundIndex + 1;
+    return nextRoundIndex < state.duels.length ? state.duels[nextRoundIndex] : null;
+  }, [state.roundIndex, state.duels]);
 
   // Show loading screen while authentication is loading
   if (authLoading) {
@@ -193,24 +209,21 @@ const ScrambleMatchScreen = () => {
       );
     
     case PHASES.RESULT:
-      const nextRoundIndex = state.roundIndex + 1;
-      const nextDuel = nextRoundIndex < state.duels.length ? state.duels[nextRoundIndex] : null;
-      
       return (
         <BaseballCard
           winnerCard={state.winnerMoment}
           loserCard={state.loserMoment}
-          nextTopMoment={nextDuel?.moment1}
+          nextTopMoment={nextRoundData?.moment1}
           onNext={handleNextRound}
         />
       );
     
     case PHASES.COMPLETE:
       return (
-        <View style={styles.container}>
-          <Text style={styles.completeText}>Match Complete!</Text>
-          <Text style={styles.completeSubtext}>Thanks for playing Scramble</Text>
-        </View>
+        <LeaderboardComplete
+          sport={state.sport}
+          onPlayAgain={handlePlayAgain}
+        />
       );
     
     default:

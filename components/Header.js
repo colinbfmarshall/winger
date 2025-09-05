@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Colors from '../config/colors';
 
 const Header = () => {
   const insets = useSafeAreaInsets();
@@ -14,11 +15,11 @@ const Header = () => {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: 'black',
+    backgroundColor: Colors.background,
   },
   line: {
     height: 2,
-    backgroundColor: 'tomato',
+    backgroundColor: Colors.primary,
     width: '100%',
   },
 });

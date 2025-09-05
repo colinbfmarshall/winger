@@ -14,9 +14,12 @@ const BottomVideoPreloader = ({ bottomMoment, onVideoReady }) => {
     if (!bottomMoment) return;
 
     let hasCalledReady = false;
+    let isActive = true;
 
     // Listen for status changes to know when video is ready
     const statusListener = ({ status }) => {
+      if (!isActive) return;
+      
       console.log('Bottom video preload status:', status);
       if (status === 'readyToPlay' && !hasCalledReady) {
         hasCalledReady = true;
@@ -31,29 +34,35 @@ const BottomVideoPreloader = ({ bottomMoment, onVideoReady }) => {
     } catch (error) {
       console.error('Error adding bottom video status listener:', error);
       // Fallback - assume ready after timeout
-      setTimeout(() => {
-        if (!hasCalledReady) {
-          hasCalledReady = true;
-          onVideoReady();
-        }
-      }, 3000);
+      if (isActive) {
+        setTimeout(() => {
+          if (!hasCalledReady && isActive) {
+            hasCalledReady = true;
+            onVideoReady();
+          }
+        }, 3000);
+      }
       return;
     }
 
     // Load bottom video asynchronously
     const loadVideo = async () => {
+      if (!isActive) return;
+      
       try {
         console.log('Preloading bottom video while top video plays:', bottomMoment.video_url);
         await player.replaceAsync(bottomMoment.video_url);
       } catch (error) {
         console.error('Error loading bottom video for preload:', error);
         // Fallback - assume ready after timeout
-        setTimeout(() => {
-          if (!hasCalledReady) {
-            hasCalledReady = true;
-            onVideoReady();
-          }
-        }, 3000);
+        if (isActive) {
+          setTimeout(() => {
+            if (!hasCalledReady && isActive) {
+              hasCalledReady = true;
+              onVideoReady();
+            }
+          }, 3000);
+        }
       }
     };
 
@@ -61,6 +70,7 @@ const BottomVideoPreloader = ({ bottomMoment, onVideoReady }) => {
 
     // Cleanup - just remove listeners, let useVideoPlayer handle player disposal
     return () => {
+      isActive = false;
       try {
         player.removeListener('statusChange', statusListener);
       } catch (error) {

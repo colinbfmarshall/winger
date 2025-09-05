@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { useFonts, RobotoCondensed_700Bold_Italic } from '@expo-google-fonts/roboto-condensed';
 import { Roboto_400Regular } from '@expo-google-fonts/roboto';
+import Colors from '../../../config/colors';
 
 const PlayInstructions = ({ onContinue, onPlay, videoReady = false, showPlayButton = false }) => {
   const [fontsLoaded] = useFonts({
@@ -114,7 +115,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   playButton: {
-    backgroundColor: 'tomato',
+    backgroundColor: Colors.primary,
     padding: 10,
     borderRadius: 5,
     alignItems: 'center',
