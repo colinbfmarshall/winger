@@ -15,9 +15,6 @@ const requiredFiles = [
   'services/authService.js',
   'services/apiService.js',
   'contexts/AuthContext.js',
-  'components/auth/LoginScreen.js',
-  'components/auth/SignupScreen.js',
-  'components/auth/AuthNavigator.js',
   'config/api.js'
 ];
 

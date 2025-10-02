@@ -206,11 +206,15 @@ export const apiService = {
     }
   },
 
-  async submitScramble(matchId, sessionId, winnerId) {
+  async submitScramble(sessionId, winnerId, roundIndex) {
     try {
       const response = await apiClient.post(
-        `/api/v1/matches/${matchId}/match_sessions/${sessionId}/submit_scramble`,
-        { winner_id: winnerId }
+        `api/v1/scramble/${sessionId}/submit_duel`,
+        { 
+          session_id: sessionId, 
+          winner_id: winnerId, 
+          round_index: roundIndex 
+        }
       );
       return { success: true, data: response.data };
     } catch (error) {
@@ -222,7 +226,7 @@ export const apiService = {
     }
   },
 
-  async createScrambleMatch() {
+  async createScrambleMatch(sport = null) {
     try {
       console.log('Creating scramble match - checking token...');
       const token = await authService.getToken();
@@ -232,7 +236,11 @@ export const apiService = {
         console.log('Token is expired:', authService.isTokenExpired(token));
       }
       
-      const response = await apiClient.post('/api/v1/matches/create_scramble_match');
+      // Prepare request body with sport parameter if provided
+      const requestBody = sport ? { sport } : {};
+      console.log('Creating scramble match with body:', requestBody);
+      
+      const response = await apiClient.post('/api/v1/scramble', requestBody);
       console.log('Scramble match created successfully');
       return { success: true, data: response.data };
     } catch (error) {
@@ -242,6 +250,63 @@ export const apiService = {
       return {
         success: false,
         error: error.response?.data?.error || 'Failed to create scramble match',
+      };
+    }
+  },
+
+  // Leaderboard endpoints
+  async getLeaderboards() {
+    try {
+      const response = await apiClient.get('/api/v1/leaderboards');
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error('Get leaderboards API error:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || 'Failed to fetch leaderboards',
+      };
+    }
+  },
+
+  async getLeaderboard(sport, page = 1, limit = 10) {
+    try {
+      const response = await apiClient.get(`/api/v1/leaderboards/${sport}`, {
+        params: { page, limit }
+      });
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error('Get leaderboard API error:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || 'Failed to fetch leaderboard',
+      };
+    }
+  },
+
+  async getMomentRanking(sport, momentId) {
+    try {
+      const response = await apiClient.get(`/api/v1/leaderboards/${sport}/moment/${momentId}`);
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error('Get moment ranking API error:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || 'Failed to fetch moment ranking',
+      };
+    }
+  },
+
+  async getTagLeaderboard(sport, tagId, page = 1, limit = 10) {
+    try {
+      const response = await apiClient.get(`/api/v1/leaderboards/${sport}/tags/${tagId}`, {
+        params: { page, limit }
+      });
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error('Get tag leaderboard API error:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || 'Failed to fetch tag leaderboard',
       };
     }
   },
