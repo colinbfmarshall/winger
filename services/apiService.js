@@ -324,6 +324,32 @@ export const apiService = {
       };
     }
   },
+
+  // New method to fetch sports with optional authentication
+  fetchSports: async (requireAuth = false) => {
+    try {
+      // For non-authenticated calls, use direct axios instead of apiClient
+      const client = requireAuth ? apiClient : axios.create({
+        baseURL: API_URL,
+        timeout: 10000,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const response = await client.get('/api/v1/scramble/sports');
+      return {
+        success: true,
+        data: response.data
+      };
+    } catch (error) {
+      console.error('Error fetching sports:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || 'Failed to fetch sports'
+      };
+    }
+  },
 };
 
 export default apiClient;

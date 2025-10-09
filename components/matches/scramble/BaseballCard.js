@@ -168,7 +168,7 @@ const BaseballCard = ({
           </View>
 
           {/* Loser Section */}
-          {loserCard && (
+          {/* {loserCard && (
             <View style={styles.loserSection}>
               <View style={styles.loserContainer}>
                 <View style={styles.loserTitle}>
@@ -202,7 +202,7 @@ const BaseballCard = ({
                 </View>
               </View>
             </View>
-          )}
+          )} */}
       </View>
 
       {/* Button Section - Bottom */}

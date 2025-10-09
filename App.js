@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, SafeAreaView, StatusBar, StyleSheet, ActivityIndicator } from 'react-native';
 import { NavigationContainer, DarkTheme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -46,7 +46,7 @@ const commonHeaderOptions = (handleHeaderPress) => ({
   },
 });
 
-const TabNavigator = ({ navigationRef }) => {
+const TabNavigator = ({ navigationRef, preloadedSports }) => {
   const [fontsLoaded] = useFonts({
     RobotoCondensed_700Bold_Italic,
   });
@@ -58,6 +58,15 @@ const TabNavigator = ({ navigationRef }) => {
   if (!fontsLoaded) {
     return null;
   }
+
+  // Pass preloaded sports to screens that need them
+  const PlayScreenWithSports = (props) => (
+    <PlayScreen {...props} preloadedSports={preloadedSports} />
+  );
+
+  const ResultsScreenWithSports = (props) => (
+    <ResultsScreen {...props} preloadedSports={preloadedSports} />
+  );
 
   return (
     <Tab.Navigator
@@ -83,7 +92,7 @@ const TabNavigator = ({ navigationRef }) => {
     >
       <Tab.Screen
         name="Play"
-        component={withSafeArea(PlayScreen)}
+        component={withSafeArea(PlayScreenWithSports)}
         listeners={({ navigation }) => ({
           tabPress: (e) => {
             // Always navigate to Play, even if already on Play tab
@@ -93,7 +102,7 @@ const TabNavigator = ({ navigationRef }) => {
       />
       <Tab.Screen
         name="Results"
-        component={withSafeArea(ResultsScreen)}
+        component={withSafeArea(ResultsScreenWithSports)}
         listeners={({ navigation }) => ({
           tabPress: (e) => {
             // Always navigate to Results, even if already on Results tab
@@ -105,32 +114,57 @@ const TabNavigator = ({ navigationRef }) => {
   );
 };
 
-const StackNavigator = () => {
+const StackNavigator = ({ preloadedSports }) => {
+  const navigationRef = useRef();
+
   return (
     <Stack.Navigator>
-      <Stack.Screen name="TabNavigator" component={TabNavigator} options={{ headerShown: false }} />
+      <Stack.Screen 
+        name="TabNavigator" 
+        options={{ headerShown: false }}
+      >
+        {(props) => (
+          <TabNavigator 
+            {...props} 
+            navigationRef={navigationRef}
+            preloadedSports={preloadedSports} 
+          />
+        )}
+      </Stack.Screen>
     </Stack.Navigator>
   );
 };
 
 const AppNavigator = () => {
   const { isAuthenticated, isLoading } = useAuth();
-  const [appIsLoading, setAppIsLoading] = useState(true);
+  const [splashComplete, setSplashComplete] = useState(false);
+  const [preloadedSports, setPreloadedSports] = useState(null);
 
+  const handleSportsLoaded = (sports) => {
+    console.log('Sports loaded in App:', sports?.length);
+    setPreloadedSports(sports);
+  };
+
+  const handleSplashComplete = () => {
+    console.log('Splash screen complete, transitioning to main app');
+    setSplashComplete(true);
+  };
+
+  // Use a single timer for splash screen duration
   useEffect(() => {
-    // Simulate a loading process
     const timer = setTimeout(() => {
-      setAppIsLoading(false);
-    }, 4500); // Adjust the timeout duration as needed
+      handleSplashComplete();
+    }, 4500); // 4.5 seconds total splash time
 
-    return () => clearTimeout(timer); // Cleanup the timer
-  }, []);
+    return () => clearTimeout(timer);
+  }, []); // Only run once on mount
 
-  if (appIsLoading) {
-    console.log('App is loading...');
-    return <SplashScreen />;
+  // Show splash screen until it's complete
+  if (!splashComplete) {
+    return <SplashScreen onSportsLoaded={handleSportsLoaded} />;
   }
 
+  // Show auth loading after splash is complete
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -143,8 +177,7 @@ const AppNavigator = () => {
     <View style={styles.appContainer}>
       <StatusBar barStyle="light-content" backgroundColor={Colors.primary} />
       <NavigationContainer theme={customDarkTheme}>
-        {/* Always show main app since users are auto-authenticated anonymously */}
-        <StackNavigator />
+        <StackNavigator preloadedSports={preloadedSports} />
       </NavigationContainer>
     </View>
   );

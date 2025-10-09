@@ -15,6 +15,16 @@ const ScrambleMatchScreen = ({ sport, onBackToHome }) => {
   const { isAuthenticated, isLoading: authLoading, user } = useAuth();
   const [state, dispatch] = useReducer(reducer, initialState);
 
+  // Handle navigation when game is complete and sport is 'all'
+  useEffect(() => {
+    if (state.phase === PHASES.COMPLETE && state.sport === 'all') {
+      // Use setTimeout to ensure this runs after the current render cycle
+      setTimeout(() => {
+        handlePlayAgain();
+      }, 0);
+    }
+  }, [state.phase, state.sport]);
+
   useEffect(() => {
     async function initSession() {
       if (!isAuthenticated) {
@@ -219,6 +229,12 @@ const ScrambleMatchScreen = ({ sport, onBackToHome }) => {
       );
     
     case PHASES.COMPLETE:
+      // For 'all' sport, the navigation is handled by useEffect above
+      // Just return null to prevent rendering the leaderboard while transitioning
+      if (state.sport === 'all') {
+        return null;
+      }
+
       return (
         <LeaderboardComplete
           sport={state.sport}

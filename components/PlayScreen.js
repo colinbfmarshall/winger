@@ -1,38 +1,106 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, ActivityIndicator, ScrollView } from 'react-native';
 import { useFonts, RobotoCondensed_700Bold_Italic } from '@expo-google-fonts/roboto-condensed';
 import { Roboto_400Regular } from '@expo-google-fonts/roboto';
 import * as ExpoSplashScreen from 'expo-splash-screen';
 import ScrambleMatchScreen from './matches/scramble/scrambleMatchScreen';
+import { apiService } from '../services/apiService';
+import { sportsCache } from '../services/sportsCache';
 import Colors from '../config/colors';
 
 ExpoSplashScreen.preventAutoHideAsync();
 
-const SPORTS = [
-  { label: 'FOOTBALL' },
-  { label: 'RUGBY' },
-  { label: 'VIDEO GAMES' },
-  { label: 'ALL' },
-];
-
-const PlayScreen = ({ navigation }) => {
+const PlayScreen = ({ navigation, preloadedSports }) => {
   const [showScrambleMatch, setShowScrambleMatch] = useState(false);
   const [selectedSport, setSelectedSport] = useState(null);
+  const [sports, setSports] = useState(preloadedSports || []);
+  const [isLoading, setIsLoading] = useState(!preloadedSports);
+  const [error, setError] = useState(null);
+  const [retryCount, setRetryCount] = useState(0);
   
   // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
-  const buttonAnimations = useRef(
-    SPORTS.map(() => new Animated.Value(0))
-  ).current;
+  const buttonAnimations = useRef([]).current;
 
   let [fontsLoaded] = useFonts({
     Roboto_400Regular,
     RobotoCondensed_700Bold_Italic,
   });
 
+  // Use preloaded sports if available, otherwise fetch
   useEffect(() => {
-    if (fontsLoaded) {
+    if (preloadedSports && preloadedSports.length > 0) {
+      console.log('Using preloaded sports in PlayScreen');
+      setSports(preloadedSports);
+      setIsLoading(false);
+      setError(null);
+      
+      // Initialize button animations for preloaded sports
+      buttonAnimations.length = 0;
+      preloadedSports.forEach(() => {
+        buttonAnimations.push(new Animated.Value(0));
+      });
+      return;
+    }
+
+    // Fallback: fetch sports if not preloaded
+    const fetchSports = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        console.log('Fetching sports in PlayScreen (fallback)');
+        
+        // First try cache
+        const cachedSports = await sportsCache.getCachedSports();
+        if (cachedSports) {
+          const sportsWithAll = [
+            ...cachedSports,
+            { id: 'all', name: 'ALL', slug: 'all' }
+          ];
+          setSports(sportsWithAll);
+          buttonAnimations.length = 0;
+          sportsWithAll.forEach(() => {
+            buttonAnimations.push(new Animated.Value(0));
+          });
+          setIsLoading(false);
+          return;
+        }
+        
+        // If no cache, fetch from API
+        const response = await apiService.fetchSports(true); // Require auth for fallback
+        
+        if (response.success) {
+          await sportsCache.storeSports(response.data);
+          
+          const sportsWithAll = [
+            ...response.data,
+            { id: 'all', name: 'ALL', slug: 'all' }
+          ];
+          
+          setSports(sportsWithAll);
+          buttonAnimations.length = 0;
+          sportsWithAll.forEach(() => {
+            buttonAnimations.push(new Animated.Value(0));
+          });
+        } else {
+          setError(response.error || 'Failed to load sports');
+        }
+      } catch (err) {
+        console.error('Error in fetchSports fallback:', err);
+        setError('Failed to load sports. Please check your connection.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSports();
+  }, [preloadedSports, retryCount]);
+
+  // Start animations after fonts and data are loaded
+  useEffect(() => {
+    if (fontsLoaded && !isLoading && sports.length > 0) {
       ExpoSplashScreen.hideAsync();
       
       // Start the main entrance animation
@@ -55,17 +123,57 @@ const PlayScreen = ({ navigation }) => {
         Animated.timing(anim, {
           toValue: 1,
           duration: 400,
-          delay: 400 + (index * buttonDelayTime), // Start after main animation
+          delay: 400 + (index * buttonDelayTime),
           useNativeDriver: true,
         }).start();
       });
     }
-  }, [fontsLoaded, fadeAnim, slideAnim, buttonAnimations]);
+  }, [fontsLoaded, isLoading, sports.length, fadeAnim, slideAnim, buttonAnimations]);
 
-  if (!fontsLoaded) {
+  // Retry function
+  const handleRetry = () => {
+    setError(null);
+    setRetryCount(prev => prev + 1);
+  };
+
+  // Show loading screen while fonts load or data is loading
+  if (!fontsLoaded || isLoading) {
     return (
-      <View style={styles.container}>
-        {/* Show black background while fonts load to prevent flash */}
+      <View style={[styles.container, styles.centerContent]}>
+        {/* <ActivityIndicator size="large" color={Colors.primary} /> */}
+        {/* <Text style={styles.loadingText}>
+          {!fontsLoaded ? 'Loading fonts...' : 'Loading sports...'}
+        </Text> */}
+      </View>
+    );
+  }
+
+  // Show error screen
+  if (error) {
+    return (
+      <View style={[styles.container, styles.centerContent]}>
+        <Text style={styles.errorText}>{error}</Text>
+        <TouchableOpacity 
+          style={styles.retryButton}
+          onPress={handleRetry}
+        >
+          <Text style={styles.buttonText}>RETRY</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  // Show empty state if no sports available
+  if (sports.length === 0) {
+    return (
+      <View style={[styles.container, styles.centerContent]}>
+        <Text style={styles.errorText}>No sports available</Text>
+        <TouchableOpacity 
+          style={styles.retryButton}
+          onPress={handleRetry}
+        >
+          <Text style={styles.buttonText}>RETRY</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -79,7 +187,7 @@ const PlayScreen = ({ navigation }) => {
   };
 
   if (showScrambleMatch) {
-    return <ScrambleMatchScreen sport={selectedSport?.toLowerCase()} onBackToHome={handleBackToHome} />;
+    return <ScrambleMatchScreen sport={selectedSport?.slug} onBackToHome={handleBackToHome} />;
   }
 
   return (
@@ -99,43 +207,49 @@ const PlayScreen = ({ navigation }) => {
       </View>
 
       <View style={[styles.section, styles.sectionMiddle]}>
-        {SPORTS.map((sport, index) => (
-          <Animated.View
-            key={sport.label}
-            style={[
-              styles.sportButtonWrapper,
-              {
-                opacity: buttonAnimations[index],
-                transform: [
-                  {
-                    translateX: buttonAnimations[index].interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [-20, 0],
-                    }),
-                  },
-                ],
-              }
-            ]}
-          >
-            <TouchableOpacity
+        <ScrollView 
+          style={styles.scrollContainer}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+        >
+          {sports.map((sport, index) => (
+            <Animated.View
+              key={sport.id}
               style={[
-                styles.sportButton,
-                selectedSport === sport.label && styles.sportButtonSelected,
+                styles.sportButtonWrapper,
+                {
+                  opacity: buttonAnimations[index] || 0,
+                  transform: [
+                    {
+                      translateX: buttonAnimations[index]?.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [-20, 0],
+                      }) || 0,
+                    },
+                  ],
+                }
               ]}
-              onPress={() => setSelectedSport(sport.label)}
-              activeOpacity={0.8}
             >
-              <Text
+              <TouchableOpacity
                 style={[
-                  styles.buttonText,
-                  selectedSport === sport.label && styles.buttonTextSelected,
+                  styles.sportButton,
+                  selectedSport?.id === sport.id && styles.sportButtonSelected,
                 ]}
+                onPress={() => setSelectedSport(sport)}
+                activeOpacity={0.8}
               >
-                {sport.label}
-              </Text>
-            </TouchableOpacity>
-          </Animated.View>
-        ))}
+                <Text
+                  style={[
+                    styles.buttonText,
+                    selectedSport?.id === sport.id && styles.buttonTextSelected,
+                  ]}
+                >
+                  {sport.name}
+                </Text>
+              </TouchableOpacity>
+            </Animated.View>
+          ))}
+        </ScrollView>
       </View>
 
       <View style={[styles.section, styles.sectionBottom]}>
@@ -176,6 +290,10 @@ const styles = StyleSheet.create({
     paddingLeft: 30,
     paddingRight: 30,
   },
+  centerContent: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   section: {
     width: '100%',
   },
@@ -188,6 +306,15 @@ const styles = StyleSheet.create({
     flex: 6,
     justifyContent: 'center',
     alignItems: 'flex-start',
+  },
+  scrollContainer: {
+    flex: 1,
+    width: '100%',
+  },
+  scrollContent: {
+    paddingVertical: 10,
+    flexGrow: 1,
+    justifyContent: 'center',
   },
   sectionBottom: {
     flex: 2,
@@ -250,6 +377,28 @@ const styles = StyleSheet.create({
   },
   playButtonTextDisabled: {
     color: Colors.textDisabled,
+  },
+  loadingText: {
+    color: Colors.text,
+    fontFamily: 'RobotoCondensed_700Bold_Italic',
+    fontSize: 18,
+    marginTop: 10,
+    textAlign: 'center',
+  },
+  errorText: {
+    color: Colors.primary,
+    fontFamily: 'RobotoCondensed_700Bold_Italic',
+    fontSize: 18,
+    textAlign: 'center',
+    marginBottom: 20,
+    paddingHorizontal: 20,
+  },
+  retryButton: {
+    backgroundColor: Colors.primary,
+    padding: 15,
+    borderRadius: 5,
+    alignItems: 'center',
+    minWidth: 100,
   },
 });
 
