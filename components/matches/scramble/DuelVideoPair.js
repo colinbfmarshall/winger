@@ -212,7 +212,7 @@ const DuelVideoPair = ({
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     Animated.timing(opacityValue, {
       toValue: 0,
-      duration: 1000,
+      duration: 300,
       useNativeDriver: true,
     }).start(() => {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
