@@ -96,7 +96,11 @@ const TabNavigator = ({ navigationRef, preloadedSports }) => {
         listeners={({ navigation }) => ({
           tabPress: (e) => {
             // Always navigate to Play, even if already on Play tab
-            navigation.navigate('Play');
+            // Use reset to ensure we start fresh
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'Play' }],
+            });
           },
         })}
       />

@@ -25,15 +25,15 @@ const PlayInstructions = ({ onContinue, onPlay, videoReady = false, showPlayButt
   return (
     <View style={styles.container} testID="play-instructions">
       <View style={[styles.section, styles.sectionMiddle]}>
-        <Text style={styles.splashText}>
+        <Text style={styles.splashText} numberOfLines={1} adjustsFontSizeToFit>
           Watch <Text style={{ fontSize: 36 }}>two videos.</Text>
         </Text>
         
-        <Text style={styles.splashText}>
+        <Text style={styles.splashText} numberOfLines={1} adjustsFontSizeToFit>
           Swipe <Text style={{ fontSize: 36 }}>to vote.</Text>
         </Text>
 
-        <Text style={styles.splashText}>
+        <Text style={styles.splashText} numberOfLines={1} adjustsFontSizeToFit>
           Repeat.
         </Text>
       </View>
