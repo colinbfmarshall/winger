@@ -7,6 +7,7 @@ import ScrambleMatchScreen from './matches/scramble/scrambleMatchScreen';
 import { apiService } from '../services/apiService';
 import { sportsCache } from '../services/sportsCache';
 import Colors from '../config/colors';
+import { useFocusEffect } from '@react-navigation/native';
 
 ExpoSplashScreen.preventAutoHideAsync();
 
@@ -129,6 +130,15 @@ const PlayScreen = ({ navigation, preloadedSports }) => {
       });
     }
   }, [fontsLoaded, isLoading, sports.length, fadeAnim, slideAnim, buttonAnimations]);
+
+  // Reset game state when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      console.log('PlayScreen focused, resetting game state');
+      setShowScrambleMatch(false);
+      setSelectedSport(null);
+    }, [])
+  );
 
   // Retry function
   const handleRetry = () => {
