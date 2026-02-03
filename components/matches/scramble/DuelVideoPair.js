@@ -25,13 +25,10 @@ const DuelVideoPair = ({
   const swipeableRef2 = useRef(null);
   const opacityValue = useRef(new Animated.Value(1)).current;
 
-  // Handle when bottom video is preloaded
   const handleBottomVideoReady = () => {
-    console.log('Bottom video preloaded and ready');
     setIsSecondVideoLoaded(true);
   };
 
-  // Create video players
   const player1 = useVideoPlayer(topMoment?.video_url || '', player => {
     player.muted = false;
     player.playbackRate = 1.1;
@@ -48,12 +45,10 @@ const DuelVideoPair = ({
     player.timeUpdateEventInterval = 1;
   });
 
-  // Update video sources when moments change
   useEffect(() => {
     const updateVideoSources = async () => {
       if (topMoment && bottomMoment) {
         try {
-          // Reset states for new videos
           setTopVideoReady(false);
           setHasNotifiedReady(false);
           setIsSecondVideoLoaded(false);
@@ -61,15 +56,9 @@ const DuelVideoPair = ({
           setIsSecondVideoPlaying(false);
           setShouldPreloadBottom(false);
           
-          console.log('DuelVideoPair: Loading top video only...');
-          console.log('Top video URL:', topMoment.video_url);
-          
-          // Load only the top video initially
           await player1.replaceAsync(topMoment.video_url);
-          console.log('Top video loaded successfully');
           setTopVideoReady(true);
           
-          // Set thumbnail for bottom video (but don't load the video yet)
           if (bottomMoment.thumbnail_url) {
             setSecondVideoThumbnail(bottomMoment.thumbnail_url);
           } else {
@@ -77,7 +66,6 @@ const DuelVideoPair = ({
             setSecondVideoThumbnail(thumbnailUrl);
           }
         } catch (error) {
-          console.error('Error updating video sources:', error);
         }
       }
     };
@@ -85,7 +73,6 @@ const DuelVideoPair = ({
     updateVideoSources();
   }, [topMoment?.video_url, bottomMoment?.video_url, topMoment?.id, bottomMoment?.id]);
 
-  // Notify parent when top video is ready (only once per video)
   useEffect(() => {
     if (topVideoReady && !hasNotifiedReady && onReadyTop) {
       setHasNotifiedReady(true);
@@ -93,12 +80,10 @@ const DuelVideoPair = ({
     }
   }, [topVideoReady, hasNotifiedReady]);
 
-  // Set up event listeners for video players
   useEffect(() => {
     const timeUpdateListener1 = (event) => {
       const currentTime = event.currentTime;
       if (topMoment?.play_until && currentTime >= topMoment.play_until) {
-        console.log(`Top video reached play_until time: ${topMoment.play_until}`);
         player1.pause();
         setIsFirstVideoPlaying(false);
         setIsSecondVideoPlaying(true);
@@ -113,9 +98,7 @@ const DuelVideoPair = ({
     };
 
     const statusChangeListener1 = ({ status }) => {
-      console.log('Top video status changed to:', status);
       if (status === 'readyToPlay' && !topVideoReady) {
-        console.log('Top video is now ready to play');
         setTopVideoReady(true);
       }
     };
@@ -123,7 +106,6 @@ const DuelVideoPair = ({
     const timeUpdateListener2 = (event) => {
       const currentTime = event.currentTime;
       if (bottomMoment?.play_until && currentTime >= bottomMoment.play_until) {
-        console.log(`Bottom video reached play_until time: ${bottomMoment.play_until}`);
         player2.pause();
         setIsSecondVideoPlaying(false);
       }
@@ -136,14 +118,11 @@ const DuelVideoPair = ({
     };
 
     const statusChangeListener2 = ({ status }) => {
-      console.log('Bottom video status changed to:', status);
       if (status === 'readyToPlay' && !isSecondVideoLoaded) {
-        console.log('Bottom video is now ready to play');
         setIsSecondVideoLoaded(true);
       }
     };
 
-    // Add event listeners
     player1.addListener('timeUpdate', timeUpdateListener1);
     player1.addListener('playingChange', playingChangeListener1);
     player1.addListener('statusChange', statusChangeListener1);
@@ -161,21 +140,15 @@ const DuelVideoPair = ({
     };
   }, [topMoment?.play_until, bottomMoment?.play_until, topMoment?.id, bottomMoment?.id, topVideoReady, isSecondVideoLoaded]);
 
-  // Handle video playback states
   useEffect(() => {
     if (isFirstVideoPlaying) {
-      console.log('Playing top video');
       player1.play();
       player2.pause();
     } else if (isSecondVideoPlaying) {
-      console.log('Playing bottom video');
       player1.pause();
       
-      // Load bottom video if not already loaded
       if (!isSecondVideoLoaded && bottomMoment) {
-        console.log('Loading bottom video for playback:', bottomMoment.video_url);
         player2.replaceAsync(bottomMoment.video_url).then(() => {
-          console.log('Bottom video loaded, starting playback');
           player2.play();
         }).catch(error => {
           console.error('Error loading bottom video:', error);
@@ -199,7 +172,6 @@ const DuelVideoPair = ({
   // Trigger bottom video preloading when top video starts playing
   useEffect(() => {
     if (isFirstVideoPlaying && !shouldPreloadBottom && bottomMoment) {
-      console.log('Top video started playing, triggering bottom video preload');
       setShouldPreloadBottom(true);
     }
   }, [isFirstVideoPlaying, shouldPreloadBottom, bottomMoment?.id]);

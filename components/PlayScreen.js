@@ -29,15 +29,12 @@ const PlayScreen = ({ navigation, preloadedSports }) => {
     RobotoCondensed_700Bold_Italic,
   });
 
-  // Use preloaded sports if available, otherwise fetch
   useEffect(() => {
     if (preloadedSports && preloadedSports.length > 0) {
-      console.log('Using preloaded sports in PlayScreen');
       setSports(preloadedSports);
       setIsLoading(false);
       setError(null);
       
-      // Initialize button animations for preloaded sports
       buttonAnimations.length = 0;
       preloadedSports.forEach(() => {
         buttonAnimations.push(new Animated.Value(0));
@@ -45,15 +42,11 @@ const PlayScreen = ({ navigation, preloadedSports }) => {
       return;
     }
 
-    // Fallback: fetch sports if not preloaded
     const fetchSports = async () => {
       try {
         setIsLoading(true);
         setError(null);
         
-        console.log('Fetching sports in PlayScreen (fallback)');
-        
-        // First try cache
         const cachedSports = await sportsCache.getCachedSports();
         if (cachedSports) {
           const sportsWithAll = [
@@ -69,8 +62,7 @@ const PlayScreen = ({ navigation, preloadedSports }) => {
           return;
         }
         
-        // If no cache, fetch from API
-        const response = await apiService.fetchSports(true); // Require auth for fallback
+        const response = await apiService.fetchSports(true);
         
         if (response.success) {
           await sportsCache.storeSports(response.data);
@@ -89,7 +81,6 @@ const PlayScreen = ({ navigation, preloadedSports }) => {
           setError(response.error || 'Failed to load sports');
         }
       } catch (err) {
-        console.error('Error in fetchSports fallback:', err);
         setError('Failed to load sports. Please check your connection.');
       } finally {
         setIsLoading(false);
@@ -99,12 +90,10 @@ const PlayScreen = ({ navigation, preloadedSports }) => {
     fetchSports();
   }, [preloadedSports, retryCount]);
 
-  // Start animations after fonts and data are loaded
   useEffect(() => {
     if (fontsLoaded && !isLoading && sports.length > 0) {
       ExpoSplashScreen.hideAsync();
       
-      // Start the main entrance animation
       Animated.parallel([
         Animated.timing(fadeAnim, {
           toValue: 1,
@@ -118,7 +107,6 @@ const PlayScreen = ({ navigation, preloadedSports }) => {
         }),
       ]).start();
 
-      // Stagger the button animations
       const buttonDelayTime = 100;
       buttonAnimations.forEach((anim, index) => {
         Animated.timing(anim, {
@@ -131,22 +119,18 @@ const PlayScreen = ({ navigation, preloadedSports }) => {
     }
   }, [fontsLoaded, isLoading, sports.length, fadeAnim, slideAnim, buttonAnimations]);
 
-  // Reset game state when screen comes into focus
   useFocusEffect(
     React.useCallback(() => {
-      console.log('PlayScreen focused, resetting game state');
       setShowScrambleMatch(false);
       setSelectedSport(null);
     }, [])
   );
 
-  // Retry function
   const handleRetry = () => {
     setError(null);
     setRetryCount(prev => prev + 1);
   };
 
-  // Show loading screen while fonts load or data is loading
   if (!fontsLoaded || isLoading) {
     return (
       <View style={[styles.container, styles.centerContent]}>
@@ -158,7 +142,6 @@ const PlayScreen = ({ navigation, preloadedSports }) => {
     );
   }
 
-  // Show error screen
   if (error) {
     return (
       <View style={[styles.container, styles.centerContent]}>
@@ -173,7 +156,6 @@ const PlayScreen = ({ navigation, preloadedSports }) => {
     );
   }
 
-  // Show empty state if no sports available
   if (sports.length === 0) {
     return (
       <View style={[styles.container, styles.centerContent]}>

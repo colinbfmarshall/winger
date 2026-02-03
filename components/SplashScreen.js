@@ -16,7 +16,6 @@ const SplashScreen = ({ onSportsLoaded }) => {
   const [sportsLoadingComplete, setSportsLoadingComplete] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
-  // Start fade animation when fonts load
   useEffect(() => {
     if (fontsLoaded) {
       ExpoSplashScreen.hideAsync();
@@ -28,20 +27,15 @@ const SplashScreen = ({ onSportsLoaded }) => {
     }
   }, [fontsLoaded, fadeAnim]);
 
-  // Preload sports data only once
   useEffect(() => {
-    let isMounted = true; // Flag to prevent state updates if component unmounts
+    let isMounted = true;
 
     const preloadSports = async () => {
-      if (sportsLoadingComplete) return; // Prevent multiple executions
+      if (sportsLoadingComplete) return; 
 
       try {
-        console.log('Preloading sports data during splash...');
-        
-        // First check if we have valid cached data
         const cachedSports = await sportsCache.getCachedSports();
         if (cachedSports && isMounted) {
-          console.log('Using cached sports data');
           const sportsWithAll = [
             ...cachedSports,
             { id: 'all', name: 'ALL', slug: 'all' }
@@ -51,17 +45,11 @@ const SplashScreen = ({ onSportsLoaded }) => {
           return;
         }
 
-        // If no valid cache, fetch from API
-        console.log('Fetching sports from API during splash...');
-        const response = await apiService.fetchSports(false); // Don't require auth during splash
+        const response = await apiService.fetchSports(false);
         
         if (response.success && isMounted) {
-          console.log('Sports preloaded successfully during splash');
-          
-          // Cache the raw API response (without ALL option)
           await sportsCache.storeSports(response.data);
           
-          // Add ALL option for the app
           const sportsWithAll = [
             ...response.data,
             { id: 'all', name: 'ALL', slug: 'all' }
@@ -70,13 +58,11 @@ const SplashScreen = ({ onSportsLoaded }) => {
           onSportsLoaded?.(sportsWithAll);
           setSportsLoadingComplete(true);
         } else if (isMounted) {
-          console.error('Failed to preload sports during splash:', response.error);
-          setSportsLoadingComplete(true); // Mark as complete even on failure
+          setSportsLoadingComplete(true);
         }
       } catch (error) {
-        console.error('Error preloading sports during splash:', error);
         if (isMounted) {
-          setSportsLoadingComplete(true); // Mark as complete even on failure
+          setSportsLoadingComplete(true);
         }
       }
     };
@@ -85,7 +71,6 @@ const SplashScreen = ({ onSportsLoaded }) => {
       preloadSports();
     }
 
-    // Cleanup function to prevent state updates if component unmounts
     return () => {
       isMounted = false;
     };
