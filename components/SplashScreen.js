@@ -14,18 +14,21 @@ const SplashScreen = ({ onSportsLoaded }) => {
   });
 
   const [sportsLoadingComplete, setSportsLoadingComplete] = useState(false);
-  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const splashTextOpacity = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     if (fontsLoaded) {
       ExpoSplashScreen.hideAsync();
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 2300,
-        useNativeDriver: true,
-      }).start();
+      const timer = setTimeout(() => {
+        Animated.timing(splashTextOpacity, {
+          toValue: 0,
+          duration: 500,
+          useNativeDriver: true,
+        }).start();
+      }, 3000);
+      return () => clearTimeout(timer);
     }
-  }, [fontsLoaded, fadeAnim]);
+  }, [fontsLoaded, splashTextOpacity]);
 
   useEffect(() => {
     let isMounted = true;
@@ -87,12 +90,12 @@ const SplashScreen = ({ onSportsLoaded }) => {
   return (
     <View style={styles.container}>
       <View style={styles.mainContent}>
-        <Animated.Text style={[styles.splashText, { opacity: fadeAnim }]}>A MOMENT</Animated.Text>
-        <Animated.Text style={[styles.splashText, { opacity: fadeAnim }]}>YOUR VOTE</Animated.Text>
-        <Animated.Text style={[styles.splashText, { opacity: fadeAnim }]}>THE GOAT<Text style={{ color: Colors.primary }}>.</Text></Animated.Text>
+        <Animated.Text style={[styles.splashText, { opacity: splashTextOpacity }]}>A MOMENT</Animated.Text>
+        <Animated.Text style={[styles.splashText, { opacity: splashTextOpacity }]}>YOUR VOTE</Animated.Text>
+        <Animated.Text style={[styles.splashText, { opacity: splashTextOpacity }]}>THE GOAT<Text style={{ color: Colors.primary }}>.</Text></Animated.Text>
       </View>
       <View style={styles.bottomContent}>
-        <Animated.Text style={[styles.taglineText, { opacity: fadeAnim }]}>GOAT<Text style={{ color: Colors.primary }}>.</Text> the <Text style={{ color: Colors.primary }}>sports</Text> app</Animated.Text>
+        <Text style={styles.taglineText}>GOAT<Text style={{ color: Colors.primary }}>.</Text> the <Text style={{ color: Colors.primary }}>sports</Text> app</Text>
       </View>
     </View>
   );
