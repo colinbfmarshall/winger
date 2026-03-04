@@ -4,8 +4,24 @@ import * as Keychain from 'react-native-keychain';
 const TOKEN_KEY = 'jwt_token';
 const USER_KEY = 'user_data';
 const DEVICE_ID_KEY = 'device_id';
+const INSTALL_CHECK_KEY = 'app_installed';
 
 export const authService = {
+  // Check if this is a fresh install and clear stale Keychain data
+  async checkFreshInstall() {
+    try {
+      const installed = await AsyncStorage.getItem(INSTALL_CHECK_KEY);
+      if (!installed) {
+        // Fresh install - AsyncStorage is empty but Keychain may have old data
+        console.log('[Auth] Fresh install detected, clearing stale Keychain data');
+        await Keychain.resetInternetCredentials(TOKEN_KEY);
+        await AsyncStorage.setItem(INSTALL_CHECK_KEY, 'true');
+      }
+    } catch (error) {
+      console.error('[Auth] Error checking fresh install:', error);
+    }
+  },
+
   async storeToken(token) {
     try {
       await Keychain.setInternetCredentials(

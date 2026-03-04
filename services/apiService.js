@@ -17,9 +17,16 @@ apiClient.interceptors.request.use(
   async (config) => {
     const token = await authService.getToken();
     
+    console.log('[API] Request to:', config.url);
+    console.log('[API] Token exists:', !!token);
+    console.log('[API] Token expired:', token ? authService.isTokenExpired(token) : 'N/A');
+    
     if (token && !authService.isTokenExpired(token)) {
       config.headers.Authorization = `Bearer ${token}`;
-    } else {}
+      console.log('[API] Authorization header set');
+    } else {
+      console.log('[API] No valid token - Authorization header NOT set');
+    }
     return config;
   },
   (error) => {

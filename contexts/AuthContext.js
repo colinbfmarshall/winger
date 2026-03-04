@@ -98,6 +98,9 @@ export const AuthProvider = ({ children }) => {
     const restoreAuth = async () => {
       console.log('Starting auth restoration...');
       try {
+        // Check for fresh install and clear stale Keychain data
+        await authService.checkFreshInstall();
+        
         const token = await authService.getToken();
         const userData = await authService.getUserData();
         
