@@ -17,7 +17,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.coco17.winger",
-      "buildNumber": "2",
+      "buildNumber": "3",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       },
@@ -75,8 +75,7 @@
     },
     "plugins": [
       "expo-font",
-      "expo-video",
-      "react-native-keychain"
+      "expo-video"
     ]
   }
 }

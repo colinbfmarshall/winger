@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, SafeAreaView, StatusBar, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, SafeAreaView, StatusBar, StyleSheet, ActivityIndicator, LogBox } from 'react-native';
 import { NavigationContainer, DarkTheme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
@@ -11,6 +11,15 @@ import PlayScreen from './components/PlayScreen';
 import ResultsScreen from './components/ResultsScreen';
 import SplashScreen from './components/SplashScreen';
 import Colors from './config/colors';
+
+// Global error handler for unhandled promise rejections
+if (!__DEV__) {
+  const originalHandler = global.ErrorUtils?.getGlobalHandler?.();
+  global.ErrorUtils?.setGlobalHandler?.((error, isFatal) => {
+    console.log('[App] Global error:', error, 'isFatal:', isFatal);
+    originalHandler?.(error, isFatal);
+  });
+}
 
 // Create a custom dark theme to prevent white flashes
 const customDarkTheme = {
@@ -187,6 +196,34 @@ const AppNavigator = () => {
   );
 };
 
+// Error boundary to catch render errors
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.log('[ErrorBoundary] Caught error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>Something went wrong.</Text>
+          <Text style={styles.errorDetail}>{this.state.error?.toString()}</Text>
+        </View>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 const styles = StyleSheet.create({
   appContainer: {
     flex: 1,
@@ -202,14 +239,33 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: Colors.background,
   },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: Colors.background,
+    padding: 20,
+  },
+  errorText: {
+    color: Colors.text,
+    fontSize: 18,
+    marginBottom: 10,
+  },
+  errorDetail: {
+    color: Colors.primary,
+    fontSize: 12,
+    textAlign: 'center',
+  },
 });
 
 const App = () => {
   return (
     <View style={styles.appContainer}>
-      <AuthProvider>
-        <AppNavigator />
-      </AuthProvider>
+      <ErrorBoundary>
+        <AuthProvider>
+          <AppNavigator />
+        </AuthProvider>
+      </ErrorBoundary>
     </View>
   );
 };

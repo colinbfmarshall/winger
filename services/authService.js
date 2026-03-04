@@ -14,11 +14,17 @@ export const authService = {
       if (!installed) {
         // Fresh install - AsyncStorage is empty but Keychain may have old data
         console.log('[Auth] Fresh install detected, clearing stale Keychain data');
-        await Keychain.resetInternetCredentials(TOKEN_KEY);
+        try {
+          await Keychain.resetInternetCredentials({ server: TOKEN_KEY });
+        } catch (keychainError) {
+          // Keychain might not be available or throw, ignore
+          console.log('[Auth] Keychain reset failed (non-critical):', keychainError);
+        }
         await AsyncStorage.setItem(INSTALL_CHECK_KEY, 'true');
       }
     } catch (error) {
       console.error('[Auth] Error checking fresh install:', error);
+      // Don't throw - this is non-critical
     }
   },
 
@@ -45,7 +51,7 @@ export const authService = {
   
   async getToken() {
     try {
-      const credentials = await Keychain.getInternetCredentials(TOKEN_KEY);
+      const credentials = await Keychain.getInternetCredentials({ server: TOKEN_KEY });
       if (credentials) {
         return credentials.password;
       }
@@ -105,7 +111,7 @@ export const authService = {
   async logout() {
     try {
       try {
-        await Keychain.resetInternetCredentials(TOKEN_KEY);
+        await Keychain.resetInternetCredentials({ server: TOKEN_KEY });
       } catch (keychainError) {
       }
       

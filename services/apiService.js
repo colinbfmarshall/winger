@@ -44,32 +44,33 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       
-      // Clear old invalid token
-      await authService.logout();
-      
-      // Get or create device ID and re-authenticate
-      let deviceId = await authService.getDeviceId();
-      if (!deviceId) {
-        deviceId = authService.generateDeviceId();
-        await authService.storeDeviceId(deviceId);
-      }
-      
       try {
+        // Clear old invalid token
+        await authService.logout();
+        
+        // Get or create device ID and re-authenticate
+        let deviceId = await authService.getDeviceId();
+        if (!deviceId) {
+          deviceId = authService.generateDeviceId();
+          await authService.storeDeviceId(deviceId);
+        }
+        
         // Re-authenticate anonymously
-        const response = await axios.post(`${API_URL}/api/v1/anonymous_sign_in`, {
+        const authResponse = await axios.post(`${API_URL}/api/v1/anonymous_sign_in`, {
           device_id: deviceId,
         });
         
-        if (response.data?.token) {
-          await authService.storeToken(response.data.token);
-          await authService.storeUserData(response.data.user);
+        if (authResponse.data?.token) {
+          await authService.storeToken(authResponse.data.token);
+          await authService.storeUserData(authResponse.data.user);
           
           // Retry original request with new token
-          originalRequest.headers.Authorization = `Bearer ${response.data.token}`;
+          originalRequest.headers.Authorization = `Bearer ${authResponse.data.token}`;
           return apiClient(originalRequest);
         }
       } catch (authError) {
         console.error('Re-authentication failed:', authError);
+        // Fall through to reject the original error
       }
     }
 
