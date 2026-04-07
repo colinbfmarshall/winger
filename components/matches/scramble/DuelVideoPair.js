@@ -214,6 +214,7 @@ const DuelVideoPair = ({
             <VideoView
               player={player1}
               style={styles.topVideo}
+              nativeControls={false}
               allowsFullscreen={false}
               allowsPictureInPicture={false}
               contentFit="fill"
@@ -236,6 +237,7 @@ const DuelVideoPair = ({
             <VideoView
               player={player2}
               style={styles.bottomVideo}
+              nativeControls={false}
               allowsFullscreen={false}
               allowsPictureInPicture={false}
               contentFit="fill"

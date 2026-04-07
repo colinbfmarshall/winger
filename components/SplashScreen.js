@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Animated } from 'react-native';
+import { View, Text, StyleSheet, Animated, useWindowDimensions } from 'react-native';
 import { useFonts, RobotoCondensed_700Bold_Italic } from '@expo-google-fonts/roboto-condensed';
 import * as ExpoSplashScreen from 'expo-splash-screen';
 import { apiService } from '../services/apiService';
@@ -9,12 +9,17 @@ import Colors from '../config/colors';
 ExpoSplashScreen.preventAutoHideAsync();
 
 const SplashScreen = ({ onSportsLoaded }) => {
+  const { width } = useWindowDimensions();
   const [fontsLoaded] = useFonts({
     RobotoCondensed_700Bold_Italic,
   });
 
   const [sportsLoadingComplete, setSportsLoadingComplete] = useState(false);
   const splashTextOpacity = useRef(new Animated.Value(1)).current;
+  const HORIZONTAL_PADDING = 60;
+  const availableTextWidth = width - HORIZONTAL_PADDING;
+  const splashFontSize = Math.min(68, Math.max(48, availableTextWidth * 0.16));
+  const splashLineHeight = Math.round(splashFontSize * 1.06);
 
   useEffect(() => {
     if (fontsLoaded) {
@@ -90,9 +95,45 @@ const SplashScreen = ({ onSportsLoaded }) => {
   return (
     <View style={styles.container}>
       <View style={styles.mainContent}>
-        <Animated.Text style={[styles.splashText, { opacity: splashTextOpacity }]}>A MOMENT</Animated.Text>
-        <Animated.Text style={[styles.splashText, { opacity: splashTextOpacity }]}>YOUR VOTE</Animated.Text>
-        <Animated.Text style={[styles.splashText, { opacity: splashTextOpacity }]}>THE GOAT<Text style={{ color: Colors.primary }}>.</Text></Animated.Text>
+        <Animated.Text
+          style={[
+            styles.splashText,
+            {
+              opacity: splashTextOpacity,
+              fontSize: splashFontSize,
+              lineHeight: splashLineHeight,
+            },
+          ]}
+          numberOfLines={1}
+        >
+          A MOMENT
+        </Animated.Text>
+        <Animated.Text
+          style={[
+            styles.splashText,
+            {
+              opacity: splashTextOpacity,
+              fontSize: splashFontSize,
+              lineHeight: splashLineHeight,
+            },
+          ]}
+          numberOfLines={1}
+        >
+          YOUR VOTE
+        </Animated.Text>
+        <Animated.Text
+          style={[
+            styles.splashText,
+            {
+              opacity: splashTextOpacity,
+              fontSize: splashFontSize,
+              lineHeight: splashLineHeight,
+            },
+          ]}
+          numberOfLines={1}
+        >
+          THE GOAT.
+        </Animated.Text>
       </View>
       <View style={styles.bottomContent}>
         <Text style={styles.taglineText}>GOAT<Text style={{ color: Colors.primary }}>.</Text> the <Text style={{ color: Colors.primary }}>sports</Text> app</Text>
@@ -122,12 +163,11 @@ const styles = StyleSheet.create({
   },
   splashText: {
     color: Colors.text,
-    fontSize: 68,
+    width: '100%',
     fontWeight: 'bold',
     fontFamily: 'RobotoCondensed_700Bold_Italic',
     letterSpacing: 0.4,
     textAlign: 'left',
-    lineHeight: 72,
     marginBottom: 30,
   },
   taglineText: {
